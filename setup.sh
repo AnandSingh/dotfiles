@@ -1,11 +1,13 @@
 #!/bin/bash
 set -e -x
 
-local DIR=${HOME}
+DIR=${HOME}
 
 get_dotfiles () {
     echo "(1/4): GETTING DOTFILES..."
+    rm -rf $DIR/dotfiles
     git clone https://github.com/AnandSingh/dotfiles.git $DIR/dotfiles
+    rm -f $DIR/.tmux.conf $DIR/.vimrc
     ln -s $DIR/dotfiles/.tmux.conf $DIR/.tmux.conf
     ln -s $DIR/dotfiles/.vimrc $DIR/.vimrc
 }
@@ -14,6 +16,7 @@ setup_vim () {
 
     echo "(2/4) SETTING UP VIM..."
     # Install black for formatting
+    sudo dnf -y install vim python3-pip
     pip3 install black
 
     # Install vim plug for package management
@@ -49,13 +52,21 @@ setup_zsh () {
     wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O $DIR/install.sh
     cd $DIR
     echo pwd
+    chmod +x ./install.sh
     ./install.sh
     # Change the default shell to zsh
     sudo dnf -y install util-linux-user
     chsh -s /bin/zsh ${USER} 
 }
 
+setup_powerlevel10k() {
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+    rm -r ~/.zshrc
+    ln -s $DIR/dotfiles/.zshrc $DIR/.zshrc
+}
+
 get_dotfiles
 setup_vim
 setup_tmux
 setup_zsh
+setup_powerlevel10k
