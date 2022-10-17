@@ -54,6 +54,10 @@ setup_zsh () {
     echo pwd
     chmod +x ./install.sh
     ./install.sh
+
+    # Setting zsh plugin 
+    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
     # Change the default shell to zsh
     sudo dnf -y install util-linux-user
     chsh -s /bin/zsh ${USER} 
