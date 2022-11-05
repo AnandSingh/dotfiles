@@ -42,6 +42,8 @@ setup_tmux () {
     cd ..
     # Install htop
     sudo dnf -y install htop
+
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 }
 
 setup_zsh () {
