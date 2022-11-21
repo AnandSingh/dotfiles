@@ -117,3 +117,8 @@ alias vi='/usr/bin/nvim'
 #alias remove='echo ${PASS} | sudo -S apt -y remove'
 #alias purge='echo ${PASS} | sudo -S apt -y purge'
 
+alias mux='pgrep -vx tmux > /dev/null && \
+		tmux new -d -s delete-me && \
+		tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh && \
+		tmux kill-session -t delete-me && \
+		tmux attach || tmux attach'
