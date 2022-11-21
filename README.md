@@ -12,3 +12,13 @@ There are three aspects to this setup:
   ```
 ./setup.sh
   ```
+
+## other plugins to try out 
+* [fzf](https://github.com/junegunn/fzf)
+* [bat](https://github.com/sharkdp/bat)
+* [z](https://github.com/rupa/z)
+* [diff-so-fancy](https://github.com/so-fancy/diff-so-fancy)
+* [autojump](https://github.com/wting/autojump)
+* [tmuxinator](https://github.com/tmuxinator/tmuxinator)
+* [navik](https://github.com/denisidoro/navi)
+* [peco](https://github.com/peco/peco)

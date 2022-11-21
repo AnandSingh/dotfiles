@@ -42,8 +42,6 @@ setup_tmux () {
     cd ..
     # Install htop
     sudo dnf -y install htop
-
-    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 }
 
 setup_zsh () {
@@ -59,7 +57,8 @@ setup_zsh () {
 
     # Setting zsh plugin 
     git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    
     # Change the default shell to zsh
     sudo dnf -y install util-linux-user
     chsh -s /bin/zsh ${USER} 
