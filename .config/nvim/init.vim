@@ -12,6 +12,8 @@ Plug 'machakann/vim-highlightedyank'
 Plug 'morhetz/gruvbox'
 Plug 'brookhong/cscope.vim'
 Plug 'ycm-core/YouCompleteMe'
+Plug 'itchyny/lightline.vim'
+Plug 'edkolev/tmuxline.vim'
 " Plug 'rhysd/vim-clang-format'
 
 call plug#end()

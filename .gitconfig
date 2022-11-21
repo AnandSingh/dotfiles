@@ -1,8 +1,8 @@
 [user]
 	name = Anand Singh 
-	email = anand.krs@gmail.com 
-[url "git@github.com:"]
-    insteadOf = https://github.com/
+	email = asingh.ios@outlook.com 
+#[url "git@github.com:"]
+#    insteadOf = https://github.com/
 [core]
 	editor = nvim
 	whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
