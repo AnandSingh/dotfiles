@@ -114,6 +114,10 @@ source $ZSH/oh-my-zsh.sh
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+if [ -f ~/.bashrc_private ]; then
+	. ~/.bashrc_private
+fi
+
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 __conda_setup="$('/home/anandsingh/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
