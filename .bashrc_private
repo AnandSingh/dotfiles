@@ -114,7 +114,6 @@ alias vi='/usr/bin/nvim'
 #alias update='echo ${PASS} | sudo -S apt update'
 #alias upgrade='echo ${PASS} | sudo -S apt update && sudo apt -y upgrade'
 #alias install='echo ${PASS} | sudo -S apt -y install'
-#alias remove='echo ${PASS} | sudo -S apt -y remove'
+#alias removecho ${PASS} | sudo -S apt -y remove'
 #alias purge='echo ${PASS} | sudo -S apt -y purge'
 
-edenfsctl start &
