@@ -1,30 +1,32 @@
 #!/bin/bash
 set -e -x
 
-local DIR=${HOME}
+DIR=${HOME}
 
 get_dotfiles () {
 
     echo "(1/4): GETTING DOTFILES..."
     git clone https://github.com/asingh-io/dotfiles.git $DIR/dotfiles
-    ln -s $DIR/dotfiles/.tmux.conf $DIR/.tmux.conf
-    ln -s $DIR/dotfiles/.vimrc $DIR/.vimrc
-    chown -R $USER:$USER $DIR/dotfiles $DIR/.vimrc $DIR/.tmux.conf
-
 }
 
-setup_vim () {
+setup_nvim () {
 
-    echo "(2/4) SETTING UP VIM..."
+    echo "(2/4) SETTING UP NVIM..."
+    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+    sudo dnf install -y neovim python3-neovim
     # Install black for formatting
     pip3 install black
 
+    mkdir -p ${DIR}/./config/nvim/autoload
+
+    ln -s ${DIR}/dotfiles/.config/nvim/init.vim $DIR/.config/nvim/init.vim
+
     # Install vim plug for package management
-    curl -fLo $DIR/.vim/autoload/plug.vim --create-dirs \
+    curl -fLo $DIR/.config/nvim/autoload/plug.vim --create-dirs \
         https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    chown -R $UER:ec2-user $DIR/.vim
+
     # Install packages
-    vim +PlugInstall +qall
+    nvim +PlugInstall +qall
 
 }
 
@@ -36,6 +38,7 @@ setup_tmux () {
     dnf -y install libevent-devel
     dnf -y install htop
 
+    ln -s $DIR/dotfiles/.tmux.conf $DIR/.tmux.conf
     dnf install tmux
 
     # Get the latest version
@@ -49,24 +52,33 @@ setup_tmux () {
 setup_zsh () {
 
     echo "(4/4) SETTING UP ZSH..."
-    dnf -y update && dnf -y install zsh
+     sudo dnf -y install zsh
     # Install oh-my-zsh
     wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O $DIR/install.sh
     chown -R $USER:$USER $DIR/install.sh
     cd $DIR
     echo pwd
-    install.sh
+    chmod +x ./install.sh
+    ./install.sh
+
+    # Setting zsh plugin 
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+    
     # Change the default shell to zsh
-    dnf -y install util-linux-user
-    chsh -s /bin/zsh  $USER  
+    sudo dnf -y install util-linux-user
+    
+    rm -r ~/.zshrc
+    ln -s $DIR/dotfiles/.zshrc $DIR/.zshrc
+    sudo chsh -s /bin/zsh ${USER}
+
 }
 
 setup_powerline () {
-	git clone --depth=1 git@github.com:romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 	# set powerline10 K
 	ZSH_THEME="powerlevel10k/powerlevel10k"
-
-	echo "typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true" >> ~/.p10k.zsh
+    echo "typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true" >> ~/.p10k.zsh
 }
 
 check_sudo() {

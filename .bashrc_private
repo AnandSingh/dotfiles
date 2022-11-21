@@ -1,0 +1,119 @@
+
+gen_tags() {
+	#vi:syntax=sh
+
+	if [ -z "$WORKSPACEDIR" ]; then
+		echo "Need to \"source workon $workspace\" first..."
+        return
+	fi
+
+	SCOPETAGSDIR=$HOME/scopetags/$WORKSPACE
+	if [[ ! -d $SCOPETAGSDIR ]]; then
+		mkdir -p $SCOPETAGSDIR
+	fi
+	cd $SCOPETAGSDIR
+	INDEXFILES=$SCOPETAGSDIR/files
+
+	find -H $WORKSPACEDIR -name '*.c' -o -name '*.h' -o -name '*.a' > $INDEXFILES
+
+	echo "Generating cscope files..."
+	cscope -i$INDEXFILES -b -q
+	# -b            Build the cross-reference only.
+	# -q            Enable fast symbol lookup via an inverted index.
+
+
+	echo "Generating ctags files..."
+	ctags -L $INDEXFILES --extra=+f
+	
+    cd - 
+	# -L            Read the list of file names from the specified file.
+	# --extra=+f    Also include entries for base filename.
+}
+
+workon() {
+	# This script must be sourced
+	#if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	#	echo "You should source this script instead of calling it."
+	#	exit 1
+	#fi
+
+	WORKSPACEROOT=$HOME/work
+
+	if [[ $# -ne 1 || ! -d "$1" ]]; then
+		echo "Usage: source workon workspace"
+		echo "Available workspaces:"
+		ls -1 $WORKSPACEROOT
+        return
+	fi
+
+	export WORKSPACE=$1
+	export WORKSPACEDIR=$WORKSPACEROOT/$WORKSPACE
+
+	# for vim:
+	SCOPETAGSDIR=$HOME/scopetags/$WORKSPACE
+	export CSCOPE_DB=$SCOPETAGSDIR/cscope.out
+	export CTAGS_DB=$SCOPETAGSDIR/tags
+
+	cd $WORKSPACEDIR
+}
+
+indent()
+{
+    # Convert file encoding type from dos 2 unix
+    find . -regex '.*\.\(cpp\|h\|c\)' -exec dos2unix {} \;
+
+    # Remove trailing spaces from source files
+    find . -regex '.*\.\(cpp\|h\|c\)' -exec sed -i 's/[ \t ]*$//g' {} \;
+
+    # Replace tabs with 4-spaces in all source files
+    find . -regex '.*\.\(cpp\|h\|c\)' -exec sed -i 's/\t/    /g' {} \;
+
+    # indent code
+    find . -regex '.*\.\(cpp\|h\|c\)' -exec astyle --indent-switches --indent-cases --pad-oper --pad-comma --add-brackets --indent=spaces=4 -A2 --mode=c  {} \;
+
+}
+
+find_tty()
+{
+	for sysdevpath in $(find /sys/bus/usb/devices/usb*/ -name dev); do
+		(
+			syspath="${sysdevpath%/dev}"
+			devname="$(udevadm info -q name -p $syspath)"
+			[[ "$devname" == "bus/"* ]] && continue
+			eval "$(udevadm info -q property --export -p $syspath)"
+			[[ -z "$ID_SERIAL" ]] && continue
+			echo "/dev/$devname - $ID_SERIAL"
+		)
+	done
+}
+
+ssh_pi() {
+    echo "Logging to $1"
+    sshpass -p 'raspberry' ssh pi@$1
+}
+
+
+
+PASS=''
+
+alias lora91='ssh_pi lora91.local'
+alias corecell='ssh_pi corecell.local'
+alias pi='echo ${PASS} | sudo -S nmap -sn 10.9.16.0/24'
+alias pilab='echo ${PASS} | sudo -S nmap -sn 10.9.220.0/24'
+alias piwifi='echo ${PASS} | sudo -S nmap -sn 10.9.80.0/24'
+
+# dnf
+alias update='echo ${PASS} | sudo -S dnf upgrade --refresh'
+alias install='echo ${PASS} | sudo -S dnf -y install'
+alias remove='echo ${PASS} | sudo -S dnf -y remove'
+alias purge='echo ${PASS} | sudo -S dnf -y purge'
+
+alias vim='/usr/bin/nvim'
+alias vi='/usr/bin/nvim'
+# apt-get
+#alias update='echo ${PASS} | sudo -S apt update'
+#alias upgrade='echo ${PASS} | sudo -S apt update && sudo apt -y upgrade'
+#alias install='echo ${PASS} | sudo -S apt -y install'
+#alias remove='echo ${PASS} | sudo -S apt -y remove'
+#alias purge='echo ${PASS} | sudo -S apt -y purge'
+
