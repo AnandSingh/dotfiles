@@ -18,7 +18,7 @@ setup_nvim () {
     pip3 install black
     sudo dnf remove -y vim  
 
-    mkdir -p ${DIR}/./config/nvim/autoload
+    mkdir -p ${DIR}/.config/nvim/autoload
 
     ln -s ${DIR}/dotfiles/.config/nvim/init.vim $DIR/.config/nvim/init.vim
 
@@ -35,13 +35,14 @@ setup_tmux () {
 
     echo "(3/4) SETTING UP TMUX..."
     # Install tmux dependencies
-    dnf -y install ncurses-devel
-    dnf -y install libevent-devel
-    dnf -y install htop
+    sudo dnf -y install ncurses-devel
+    sudo dnf -y install libevent-devel
+    sudo dnf -y install htop
+
 
     ln -s $DIR/dotfiles/.tmux.conf $DIR/.tmux.conf
     ln -s $DIR/dotfiles/.lightline.tmux.conf $DIR/lightline.tmux.conf
-    dnf install tmux
+    sudo dnf install tmux
 
     # Get the latest version
     # git clone https://github.com/tmux/tmux.git
@@ -73,6 +74,7 @@ setup_zsh () {
     
     rm -r ~/.zshrc
     ln -s $DIR/dotfiles/.zshrc $DIR/.zshrc
+    ln -s $DIR/dotfiles/.bashrc_private $DIR/.bashrc_private
     sudo chsh -s /bin/zsh ${USER}
 
 }
