@@ -16,6 +16,7 @@ setup_nvim () {
     sudo dnf install -y neovim python3-neovim
     # Install black for formatting
     pip3 install black
+    sudo dnf remove -y vim  
 
     mkdir -p ${DIR}/./config/nvim/autoload
 
