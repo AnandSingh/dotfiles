@@ -91,6 +91,6 @@ check_sudo() {
 }
 
 get_dotfiles
-setup_vim
+setup_nvim
 setup_tmux
 setup_zsh
