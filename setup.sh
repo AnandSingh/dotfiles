@@ -12,10 +12,10 @@ get_dotfiles () {
 setup_nvim () {
 
     echo "(2/4) SETTING UP NVIM..."
-    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     sudo dnf install -y neovim python3-neovim
     # Install black for formatting
-    pip3 install black
+    sudo dnf install -y python3-pip
+    python3 -m pip install black
     sudo dnf remove -y vim  
 
     mkdir -p ${DIR}/.config/nvim/autoload
@@ -41,7 +41,7 @@ setup_tmux () {
 
 
     ln -s $DIR/dotfiles/.tmux.conf $DIR/.tmux.conf
-    ln -s $DIR/dotfiles/.lightline.tmux.conf $DIR/lightline.tmux.conf
+    ln -s $DIR/dotfiles/.lightline.tmux.conf $DIR/.lightline.tmux.conf
     sudo dnf install tmux
 
     # Get the latest version
@@ -72,7 +72,7 @@ setup_zsh () {
     # Change the default shell to zsh
     sudo dnf -y install util-linux-user
     
-    rm -r ~/.zshrc
+    rm -f $DIR/.zshrc $DIR/.bashrc_private
     ln -s $DIR/dotfiles/.zshrc $DIR/.zshrc
     ln -s $DIR/dotfiles/.bashrc_private $DIR/.bashrc_private
     sudo chsh -s /bin/zsh ${USER}
@@ -80,8 +80,8 @@ setup_zsh () {
 }
 
 setup_powerline () {
-	# set powerline10 K
-	ZSH_THEME="powerlevel10k/powerlevel10k"
+    # set powerline10 K
+    ZSH_THEME="powerlevel10k/powerlevel10k"
     echo "typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true" >> ~/.p10k.zsh
 }
 
