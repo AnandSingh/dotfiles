@@ -1,0 +1,5 @@
+#!/bin/sh
+xrandr --newmode "2560x1600_59.99"  348.25  2560 2760 3032 3504  1600 1603 1609 1658 -hsync +vsync
+xrandr --addmode eDP-1 "2560x1600_59.99"
+xrandr --output eDP-1 --primary --mode "2560x1600_59.99"
+#xrandr --output eDP-1 --primary --mode 2256x1504 --pos 0x0 --rotate normal --output DisplayPort-0 --off --output DisplayPort-1 --off --output DisplayPort-2 --off --output DisplayPort-3 --mode 2560x1600_60.00 --pos 2256x0 --rotate normal --output DisplayPort-4 --off --output DisplayPort-5 --off --output DisplayPort-6 --off --output DisplayPort-7 --off
