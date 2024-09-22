@@ -1,4 +1,13 @@
 
+source /usr/share/fzf/shell/key-bindings.zsh
+
+export FZF_CTRL_T_OPTS="--height 60% \
+--border sharp \
+--layout reverse \
+--prompt '∷ ' \
+--pointer ▶ \
+--marker ⇒"
+
 gen_tags() {
 	#vi:syntax=sh
 
@@ -92,13 +101,12 @@ ssh_pi() {
     sshpass -p 'raspberry' ssh pi@$1
 }
 
+PASS='aks'
 
-
-PASS=''
-
+alias cat='bat'
 alias lora91='ssh_pi lora91.local'
 alias corecell='ssh_pi corecell.local'
-alias pi='echo ${PASS} | sudo -S nmap -sn 10.9.16.0/24'
+alias pi='echo ${PASS} | sudo -S nmap -sn 192.168.0.0/24'
 alias pilab='echo ${PASS} | sudo -S nmap -sn 10.9.220.0/24'
 alias piwifi='echo ${PASS} | sudo -S nmap -sn 10.9.80.0/24'
 
@@ -110,15 +118,20 @@ alias purge='echo ${PASS} | sudo -S dnf -y purge'
 
 alias vim='/usr/bin/nvim'
 alias vi='/usr/bin/nvim'
+
+alias c='xclip'
+alias v='xclip -o'
+
 # apt-get
-#alias update='echo ${PASS} | sudo -S apt update'
-#alias upgrade='echo ${PASS} | sudo -S apt update && sudo apt -y upgrade'
-#alias install='echo ${PASS} | sudo -S apt -y install'
-#alias remove='echo ${PASS} | sudo -S apt -y remove'
-#alias purge='echo ${PASS} | sudo -S apt -y purge'
+alias update='echo ${PASS} | sudo -S dnf update'
+alias upgrade='echo ${PASS} | sudo -S dnf update && sudo dnf -y upgrade'
+alias install='echo ${PASS} | sudo -S dnf -y install'
+alias remove='echo ${PASS} | sudo -S dnf -y remove'
+alias purge='echo ${PASS} | sudo -S dnf -y purge'
 
 alias mux='pgrep -vx tmux > /dev/null && \
 		tmux new -d -s delete-me && \
 		tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh && \
 		tmux kill-session -t delete-me && \
 		tmux attach || tmux attach'
+
