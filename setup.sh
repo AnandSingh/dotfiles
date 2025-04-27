@@ -6,16 +6,15 @@ DIR=${HOME}
 get_dotfiles () {
 
     echo "(1/4): GETTING DOTFILES..."
-    git clone https://github.com/asingh-io/dotfiles.git $DIR/dotfiles
+    #	git clone https://github.com/asingh-io/dotfiles.git $DIR/dotfiles
 }
 
 setup_nvim () {
 
     echo "(2/4) SETTING UP NVIM..."
-    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
     sudo dnf install -y neovim python3-neovim
     # Install black for formatting
-    pip3 install black
+    #python -m pip install black
     sudo dnf remove -y vim  
 
     mkdir -p ${DIR}/.config/nvim/autoload
@@ -41,7 +40,7 @@ setup_tmux () {
 
 
     ln -s $DIR/dotfiles/.tmux.conf $DIR/.tmux.conf
-    ln -s $DIR/dotfiles/.lightline.tmux.conf $DIR/lightline.tmux.conf
+    ln -s $DIR/dotfiles/.lightline.tmux.conf $DIR/.lightline.tmux.conf
     sudo dnf install tmux
 
     # Get the latest version
@@ -57,12 +56,7 @@ setup_zsh () {
     echo "(4/4) SETTING UP ZSH..."
      sudo dnf -y install zsh
     # Install oh-my-zsh
-    wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O $DIR/install.sh
-    chown -R $USER:$USER $DIR/install.sh
-    cd $DIR
-    echo pwd
-    chmod +x ./install.sh
-    ./install.sh
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
     # Setting zsh plugin 
     git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
