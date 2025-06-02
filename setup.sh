@@ -39,8 +39,8 @@ setup_tmux () {
     sudo dnf -y install htop
 
 
-    ln -s $DIR/dotfiles/.tmux.conf $DIR/.tmux.conf
-    ln -s $DIR/dotfiles/.lightline.tmux.conf $DIR/.lightline.tmux.conf
+    ln -s $DIR/dotfiles/tmux/.tmux.conf $DIR/.tmux.conf
+    ln -s $DIR/dotfiles/tmux/.lightline.tmux.conf $DIR/.lightline.tmux.conf
     sudo dnf install tmux
 
     # Get the latest version
