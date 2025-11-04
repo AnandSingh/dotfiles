@@ -32,7 +32,22 @@ This dotfiles repository uses [GNU Stow](https://www.gnu.org/software/stow/) for
 
 ## Quick Start
 
-### New Machine Setup
+### Option 1: One-Command Remote Install (Easiest)
+
+On a completely fresh machine, just run this single command:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/dotfiles/main/remote-install.sh)
+```
+
+This will:
+1. Install git (if needed)
+2. Clone your dotfiles repository
+3. Install all dependencies
+4. Symlink your configurations
+5. Prompt you for installation options
+
+### Option 2: Manual Setup
 
 Clone this repository and run the bootstrap script:
 
