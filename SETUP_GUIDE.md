@@ -33,7 +33,7 @@ dotfiles/
 
 ```bash
 # Clone your dotfiles
-git clone https://github.com/YOUR_USERNAME/dotfiles.git ~/dotfiles
+git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 
 # Run the quickstart script (does everything)
@@ -44,7 +44,7 @@ cd ~/dotfiles
 
 ```bash
 # Clone your dotfiles
-git clone https://github.com/YOUR_USERNAME/dotfiles.git ~/dotfiles
+git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 
 # Step 1: Install dependencies

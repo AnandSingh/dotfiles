@@ -37,7 +37,7 @@ This dotfiles repository uses [GNU Stow](https://www.gnu.org/software/stow/) for
 On a completely fresh machine, just run this single command:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/dotfiles/main/remote-install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/AnandSingh/dotfiles/main/remote-install.sh)
 ```
 
 This will:
@@ -52,7 +52,7 @@ This will:
 Clone this repository and run the bootstrap script:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dotfiles.git ~/dotfiles
+git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./bootstrap.sh
 ```

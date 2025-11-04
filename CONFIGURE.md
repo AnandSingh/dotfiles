@@ -10,7 +10,7 @@ Open `remote-install.sh` and change line 16:
 
 ```bash
 # FROM:
-REPO_URL="https://github.com/YOUR_USERNAME/dotfiles.git"
+REPO_URL="https://github.com/AnandSingh/dotfiles.git"
 
 # TO:
 REPO_URL="https://github.com/YOUR_ACTUAL_USERNAME/dotfiles.git"
@@ -18,19 +18,19 @@ REPO_URL="https://github.com/YOUR_ACTUAL_USERNAME/dotfiles.git"
 
 ### 2. Update README.md
 
-Search and replace all instances of `YOUR_USERNAME` with your actual GitHub username.
+Search and replace all instances of `AnandSingh` with your actual GitHub username.
 
 Quick command to do this:
 ```bash
-# Replace YOUR_USERNAME with your actual username
-sed -i '' 's/YOUR_USERNAME/your-actual-username/g' README.md
-sed -i '' 's/YOUR_USERNAME/your-actual-username/g' INSTALL.md
-sed -i '' 's/YOUR_USERNAME/your-actual-username/g' remote-install.sh
+# Replace AnandSingh with your actual username
+sed -i '' 's/AnandSingh/your-actual-username/g' README.md
+sed -i '' 's/AnandSingh/your-actual-username/g' INSTALL.md
+sed -i '' 's/AnandSingh/your-actual-username/g' remote-install.sh
 
 # For Linux, use:
-sed -i 's/YOUR_USERNAME/your-actual-username/g' README.md
-sed -i 's/YOUR_USERNAME/your-actual-username/g' INSTALL.md
-sed -i 's/YOUR_USERNAME/your-actual-username/g' remote-install.sh
+sed -i 's/AnandSingh/your-actual-username/g' README.md
+sed -i 's/AnandSingh/your-actual-username/g' INSTALL.md
+sed -i 's/AnandSingh/your-actual-username/g' remote-install.sh
 ```
 
 ### 3. Commit and Push

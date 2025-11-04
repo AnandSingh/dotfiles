@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Remote dotfiles installer
-# Usage: bash <(curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/dotfiles/main/remote-install.sh)
+# Usage: bash <(curl -fsSL https://raw.githubusercontent.com/AnandSingh/dotfiles/main/remote-install.sh)
 
 set -e
 
@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO_URL="https://github.com/YOUR_USERNAME/dotfiles.git"
+REPO_URL="https://github.com/AnandSingh/dotfiles.git"
 DOTFILES_DIR="${HOME}/dotfiles"
 BRANCH="main"
 
