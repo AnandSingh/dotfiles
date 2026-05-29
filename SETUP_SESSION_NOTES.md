@@ -23,6 +23,9 @@ Working branch: setup-ubuntu-aks
 - zsh/.zshrc: removed hardcoded /home/anandsingh/anaconda3; added portable conda detection; added batcat/fdfind compatibility aliases.
 - zsh/.bashrc_private: removed unsafe sudo password pattern and Fedora-only aliases; added safe apt/dnf aliases and editor defaults.
 - tmux/.tmux.conf: clipboard copy now supports wl-copy, xclip, or xsel.
+- bootstrap.sh: installs kitty on Ubuntu, installs missing Oh My Zsh plugins even if Oh My Zsh already exists, and checks the actual login shell before chsh.
+- install.sh/kitty: added kitty as a core stow package with a basic portable kitty config.
+- hyprland/.config/hypr/hyprland.conf: switched default terminal to kitty and commented machine-specific monitor layout in favor of portable autodetection.
 
 ## Current symlinks
 
@@ -46,23 +49,14 @@ Working branch: setup-ubuntu-aks
    echo $SHELL
    ps -p $$ -o comm=
 
-2. Install remaining clipboard package if not done:
-   sudo apt install -y wl-clipboard
-
-3. Install recommended developer terminal. Current recommendation: kitty.
-   sudo apt install -y kitty
-
-4. Test shell/tmux/nvim:
+2. Shell/tmux/nvim smoke tests passed after login:
    zsh -i -c 'echo zsh ok'
    tmux -V
    nvim --version | head
 
-5. In tmux, install plugins: prefix + I. Prefix is Ctrl-a.
+3. In tmux, install plugins: prefix + I. Prefix is Ctrl-a.
 
-6. Commit local dotfiles fixes:
-   cd ~/dotfiles
-   git status
-   git add bootstrap.sh install.sh zsh/.zshrc zsh/.bashrc_private tmux/.tmux.conf SETUP_SESSION_NOTES.md
-   git commit -m 'Fix Ubuntu dev environment bootstrap and shell configs'
+4. Change login shell to zsh when ready:
+   chsh -s /usr/bin/zsh
 
-7. Continue with terminal config and Hyprland audit.
+5. Continue Hyprland audit before stowing the hyprland package on this Ubuntu/NVIDIA hybrid laptop.

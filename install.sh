@@ -42,6 +42,7 @@ CORE_PACKAGES=(
     "git"
     "zsh"
     "tmux"
+    "kitty"
 )
 
 EDITOR_PACKAGES=(
@@ -158,7 +159,7 @@ Usage: $0 [OPTION]
 
 Options:
     install             Install all packages (default)
-    core                Install only core packages (git, zsh, tmux)
+    core                Install only core packages (git, zsh, tmux, kitty)
     editors             Install only editor packages (vim, nvim)
     linux-wm            Install only Linux window manager packages
     uninstall           Remove all symlinks

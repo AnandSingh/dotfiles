@@ -109,7 +109,8 @@ install_packages() {
                 ca-certificates \
                 wl-clipboard \
                 xclip \
-                bc
+                bc \
+                kitty
 
             # bat is called batcat on Ubuntu
             if ! command -v bat &> /dev/null && command -v batcat &> /dev/null; then
@@ -127,32 +128,30 @@ install_oh_my_zsh() {
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
         log_info "Installing Oh My Zsh..."
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-
-        # Install plugins
-        log_info "Installing zsh plugins..."
-
-        # zsh-autosuggestions
-        if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
-            git clone https://github.com/zsh-users/zsh-autosuggestions \
-                ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-        fi
-
-        # zsh-syntax-highlighting
-        if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
-            git clone https://github.com/zsh-users/zsh-syntax-highlighting \
-                ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-        fi
-
-        # powerlevel10k theme
-        if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" ]; then
-            git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
-                ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-        fi
-
-        log_info "Oh My Zsh and plugins installed!"
     else
         log_warn "Oh My Zsh already installed, skipping..."
     fi
+
+    # Install/update expected plugins even when Oh My Zsh already exists.
+    local zsh_custom="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+    log_info "Installing zsh plugins..."
+
+    if [ ! -d "$zsh_custom/plugins/zsh-autosuggestions" ]; then
+        git clone https://github.com/zsh-users/zsh-autosuggestions \
+            "$zsh_custom/plugins/zsh-autosuggestions"
+    fi
+
+    if [ ! -d "$zsh_custom/plugins/zsh-syntax-highlighting" ]; then
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting \
+            "$zsh_custom/plugins/zsh-syntax-highlighting"
+    fi
+
+    if [ ! -d "$zsh_custom/themes/powerlevel10k" ]; then
+        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+            "$zsh_custom/themes/powerlevel10k"
+    fi
+
+    log_info "Oh My Zsh plugins are ready!"
 }
 
 # Install vim-plug for Neovim
@@ -171,9 +170,19 @@ install_vim_plug() {
 
 # Set Zsh as default shell
 set_default_shell() {
-    if [ "$SHELL" != "$(which zsh)" ]; then
+    local zsh_path
+    local login_shell
+
+    zsh_path="$(command -v zsh)"
+    if command -v getent >/dev/null 2>&1; then
+        login_shell="$(getent passwd "$USER" | cut -d: -f7)"
+    else
+        login_shell="$SHELL"
+    fi
+
+    if [ "$login_shell" != "$zsh_path" ]; then
         log_info "Setting Zsh as default shell..."
-        chsh -s $(which zsh)
+        chsh -s "$zsh_path"
         log_info "Zsh set as default shell. Please log out and back in for changes to take effect."
     else
         log_info "Zsh is already the default shell"
