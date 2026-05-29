@@ -100,7 +100,16 @@ install_packages() {
                 wget \
                 build-essential \
                 htop \
-                fzf
+                fzf \
+                ripgrep \
+                fd-find \
+                bat \
+                jq \
+                unzip \
+                ca-certificates \
+                wl-clipboard \
+                xclip \
+                bc
 
             # bat is called batcat on Ubuntu
             if ! command -v bat &> /dev/null && command -v batcat &> /dev/null; then

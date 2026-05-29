@@ -89,9 +89,9 @@ stow_package() {
         log_info "${action}ing $package..."
 
         if [ "$action" == "restow" ]; then
-            stow -R -d "$DOTFILES_DIR" -t "$HOME" "$package" 2>&1 | grep -v "BUG in find_stowed_path" || true
+            stow -R -d "$DOTFILES_DIR" -t "$HOME" "$package"
         else
-            stow -d "$DOTFILES_DIR" -t "$HOME" "$package" 2>&1 | grep -v "BUG in find_stowed_path" || true
+            stow -d "$DOTFILES_DIR" -t "$HOME" "$package"
         fi
     else
         log_warn "Package $package does not exist, skipping..."
@@ -104,7 +104,7 @@ unstow_package() {
 
     if [ -d "$DOTFILES_DIR/$package" ]; then
         log_info "Unstowing $package..."
-        stow -D -d "$DOTFILES_DIR" -t "$HOME" "$package" 2>&1 | grep -v "BUG in find_stowed_path" || true
+        stow -D -d "$DOTFILES_DIR" -t "$HOME" "$package"
     fi
 }
 

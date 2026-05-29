@@ -5,8 +5,16 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
+# User bin paths
+export PATH="$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH"
+
+# Ubuntu package compatibility aliases
+if command -v batcat >/dev/null 2>&1 && ! command -v bat >/dev/null 2>&1; then
+  alias bat='batcat'
+fi
+if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
+  alias fd='fdfind'
+fi
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -122,18 +130,19 @@ if [ -f ~/.bashrc_private ]; then
 	. ~/.bashrc_private
 fi
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/anandsingh/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/anandsingh/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/anandsingh/anaconda3/etc/profile.d/conda.sh"
+# Optional conda/mamba initialization. Keep machine-specific paths out of the repo.
+for conda_root in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/mambaforge"; do
+  if [ -x "$conda_root/bin/conda" ]; then
+    __conda_setup="$($conda_root/bin/conda shell.zsh hook 2>/dev/null)"
+    if [ $? -eq 0 ]; then
+      eval "$__conda_setup"
+    elif [ -f "$conda_root/etc/profile.d/conda.sh" ]; then
+      . "$conda_root/etc/profile.d/conda.sh"
     else
-        export PATH="/home/anandsingh/anaconda3/bin:$PATH"
+      export PATH="$conda_root/bin:$PATH"
     fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
+    unset __conda_setup
+    break
+  fi
+done
 
