@@ -137,10 +137,15 @@ install_linux_wm() {
     fi
 }
 
-# Install all packages
-install_all() {
+# Install safe default packages
+install_default() {
     install_core
     install_editors
+}
+
+# Install all packages, including desktop/window-manager configs
+install_all() {
+    install_default
     install_linux_wm
 }
 
@@ -158,7 +163,8 @@ usage() {
 Usage: $0 [OPTION]
 
 Options:
-    install             Install all packages (default)
+    install             Install core/editor packages (default, safe)
+    all                 Install all packages including Linux WM/desktop configs
     core                Install only core packages (git, zsh, tmux, kitty)
     editors             Install only editor packages (vim, nvim)
     linux-wm            Install only Linux window manager packages
@@ -167,7 +173,8 @@ Options:
     help                Show this help message
 
 Examples:
-    $0                  # Install all packages
+    $0                  # Install core/editor packages
+    $0 all              # Install everything, including Linux WM/desktop configs
     $0 core             # Install only core packages
     $0 restow           # Restow all packages
     $0 uninstall        # Remove all symlinks
@@ -185,8 +192,12 @@ main() {
     local command=${1:-install}
 
     case "$command" in
-        install|all)
-            log_info "Installing dotfiles..."
+        install)
+            log_info "Installing default dotfiles..."
+            install_default
+            ;;
+        all)
+            log_info "Installing all dotfiles..."
             install_all
             ;;
         core)

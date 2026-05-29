@@ -24,7 +24,7 @@ Working branch: setup-ubuntu-aks
 - zsh/.bashrc_private: removed unsafe sudo password pattern and Fedora-only aliases; added safe apt/dnf aliases and editor defaults.
 - tmux/.tmux.conf: clipboard copy now supports wl-copy, xclip, or xsel.
 - bootstrap.sh: installs kitty on Ubuntu, installs missing Oh My Zsh plugins even if Oh My Zsh already exists, and checks the actual login shell before chsh.
-- install.sh/kitty: added kitty as a core stow package with a basic portable kitty config.
+- install.sh/kitty: added kitty as a core stow package with a basic portable kitty config; made default install safe (core/editor only) and kept desktop/window-manager configs behind explicit linux-wm/all commands.
 - hyprland/.config/hypr/hyprland.conf: switched default terminal to kitty and commented machine-specific monitor layout in favor of portable autodetection.
 
 ## Current symlinks
