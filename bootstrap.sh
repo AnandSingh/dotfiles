@@ -180,12 +180,20 @@ set_default_shell() {
         login_shell="$SHELL"
     fi
 
-    if [ "$login_shell" != "$zsh_path" ]; then
+    if [ "$(basename "$login_shell")" != "zsh" ]; then
         log_info "Setting Zsh as default shell..."
         chsh -s "$zsh_path"
         log_info "Zsh set as default shell. Please log out and back in for changes to take effect."
     else
-        log_info "Zsh is already the default shell"
+        log_info "Zsh is already the default shell: $login_shell"
+    fi
+
+    if command -v getent >/dev/null 2>&1; then
+        login_shell="$(getent passwd "$USER" | cut -d: -f7)"
+        if [ "$(basename "$login_shell")" != "zsh" ]; then
+            log_error "Default shell is still $login_shell; run: chsh -s $zsh_path"
+            exit 1
+        fi
     fi
 }
 
