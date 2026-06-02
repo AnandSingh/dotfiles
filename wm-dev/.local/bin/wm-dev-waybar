@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v waybar >/dev/null 2>&1; then
+  exit 0
+fi
+
+config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+style="$config_home/waybar/style-dev.css"
+
+if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  config="$config_home/waybar/config.hypr-dev.jsonc"
+elif [ -n "${SWAYSOCK:-}" ]; then
+  config="$config_home/waybar/config.sway-dev.jsonc"
+else
+  config="$config_home/waybar/config.sway-dev.jsonc"
+fi
+
+[ -f "$config" ] || config="$config_home/waybar/config"
+[ -f "$style" ] || style="$config_home/waybar/style.css"
+
+pkill -x waybar >/dev/null 2>&1 || true
+sleep 0.2
+nohup waybar -c "$config" -s "$style" >"${XDG_RUNTIME_DIR:-/tmp}/waybar-dev.log" 2>&1 &

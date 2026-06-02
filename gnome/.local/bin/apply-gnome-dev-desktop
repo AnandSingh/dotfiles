@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Apply a compact, stable GNOME/Ubuntu desktop layout for development.
+# This keeps Ubuntu Dock enabled but makes it feel more like a small bottom dock.
+
+set -euo pipefail
+
+if ! command -v gsettings >/dev/null 2>&1; then
+  echo "gsettings not found; this script is intended for GNOME/Ubuntu." >&2
+  exit 1
+fi
+
+schema="org.gnome.shell.extensions.dash-to-dock"
+if ! gsettings list-schemas | grep -qx "$schema"; then
+  echo "Ubuntu Dock / Dash-to-Dock schema not found: $schema" >&2
+  exit 1
+fi
+
+# Stable alternative to installing Docky/Plank: use Ubuntu's built-in dock.
+gsettings set "$schema" dock-position 'BOTTOM'
+gsettings set "$schema" dock-fixed false
+gsettings set "$schema" intellihide true
+gsettings set "$schema" autohide true
+gsettings set "$schema" extend-height false
+gsettings set "$schema" dash-max-icon-size 36
+gsettings set "$schema" background-opacity 0.35
+gsettings set "$schema" custom-theme-shrink true
+
+# Keep the dock enabled if gnome-extensions is available.
+if command -v gnome-extensions >/dev/null 2>&1; then
+  gnome-extensions enable ubuntu-dock@ubuntu.com || true
+fi
+
+echo "Applied GNOME dev desktop: bottom compact auto-hiding dock."

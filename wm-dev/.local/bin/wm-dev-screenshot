@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode="${1:-area}"
+dir="${XDG_SCREENSHOTS_DIR:-$HOME/Pictures/Screenshots}"
+mkdir -p "$dir"
+file="$dir/$(date +'%Y-%m-%d_%H-%M-%S').png"
+
+copy_wayland() { command -v wl-copy >/dev/null 2>&1 && wl-copy < "$file" || true; }
+copy_x11() { command -v xclip >/dev/null 2>&1 && xclip -selection clipboard -t image/png -i "$file" || true; }
+notice() { notify-send "Screenshot" "$1" 2>/dev/null || true; }
+
+if [ "${XDG_SESSION_TYPE:-}" = "wayland" ] || [ -n "${SWAYSOCK:-}${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  if ! command -v grim >/dev/null 2>&1; then
+    notice "grim is not installed"
+    exit 1
+  fi
+
+  case "$mode" in
+    full) grim "$file" ;;
+    window)
+      if command -v hyprctl >/dev/null 2>&1 && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+        # Hyprland active-window capture is compositor-dependent; fall back to area.
+        grim -g "$(slurp)" "$file"
+      else
+        grim -g "$(slurp)" "$file"
+      fi
+      ;;
+    area|*) grim -g "$(slurp)" "$file" ;;
+  esac
+  copy_wayland
+else
+  if command -v maim >/dev/null 2>&1; then
+    case "$mode" in
+      full) maim "$file" ;;
+      window) maim --window "$(xdotool getactivewindow)" "$file" ;;
+      area|*) maim --select "$file" ;;
+    esac
+  elif command -v scrot >/dev/null 2>&1; then
+    case "$mode" in
+      full) scrot "$file" ;;
+      *) scrot --select "$file" ;;
+    esac
+  else
+    notice "No screenshot tool found"
+    exit 1
+  fi
+  copy_x11
+fi
+
+notice "Saved and copied: $file"

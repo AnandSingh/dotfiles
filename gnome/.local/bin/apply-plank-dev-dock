@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Apply a minimal developer-focused Plank dock.
+
+set -euo pipefail
+
+if ! command -v plank >/dev/null 2>&1; then
+  echo "Plank is not installed. Install it first: sudo apt install plank" >&2
+  exit 1
+fi
+
+launchers_dir="$HOME/.config/plank/dock1/launchers"
+mkdir -p "$launchers_dir"
+
+# Stop Plank while rewriting launchers so it doesn't race and rewrite the folder.
+pkill -x plank >/dev/null 2>&1 || true
+
+# Keep the dock focused on daily dev workflow: terminal, files, primary browser.
+cat > "$launchers_dir/kitty.dockitem" <<'ITEM'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/kitty.desktop
+ITEM
+
+cat > "$launchers_dir/org.gnome.Nautilus.dockitem" <<'ITEM'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/org.gnome.Nautilus.desktop
+ITEM
+
+cat > "$launchers_dir/google-chrome.dockitem" <<'ITEM'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/google-chrome.desktop
+ITEM
+
+# Hide old/noisy default pins if they exist. Plank uses the dconf dock-items list below.
+find "$launchers_dir" -maxdepth 1 -type f \
+  ! -name 'kitty.dockitem' \
+  ! -name 'org.gnome.Nautilus.dockitem' \
+  ! -name 'google-chrome.dockitem' \
+  -delete
+
+schema="net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/"
+gsettings set "$schema" dock-items "['kitty.dockitem', 'org.gnome.Nautilus.dockitem', 'google-chrome.dockitem']"
+gsettings set "$schema" position 'bottom'
+gsettings set "$schema" alignment 'center'
+gsettings set "$schema" items-alignment 'center'
+gsettings set "$schema" icon-size 42
+gsettings set "$schema" hide-mode 'intelligent'
+gsettings set "$schema" pinned-only false
+gsettings set "$schema" show-dock-item false
+gsettings set "$schema" tooltips-enabled true
+gsettings set "$schema" zoom-enabled true
+gsettings set "$schema" zoom-percent 130
+
+if command -v gnome-extensions >/dev/null 2>&1; then
+  gnome-extensions disable ubuntu-dock@ubuntu.com || true
+fi
+
+nohup plank >/dev/null 2>&1 &
+
+echo "Applied Plank dev dock: Kitty, Files, Chrome."

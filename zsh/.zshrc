@@ -146,3 +146,17 @@ for conda_root in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/mambaforge"; do
   fi
 done
 
+
+# bun completions
+[ -s "/home/aks/.bun/_bun" ] && source "/home/aks/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Telisky dev tmux session: claude + pi panes, each in its own tscode worktree.
+# `tw` to launch/attach (idempotent); `tw <slug>` for a named task pair.
+alias tw='telisky-tmux'
+
+# Launch the Claude pane in dontAsk mode (auto-allow, still honors deny-list; NOT the full bypass)
+export TELISKY_TMUX_CLAUDE_MODE=dontAsk

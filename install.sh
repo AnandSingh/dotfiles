@@ -50,6 +50,10 @@ EDITOR_PACKAGES=(
     "nvim"
 )
 
+GNOME_PACKAGES=(
+    "gnome"
+)
+
 LINUX_WM_PACKAGES=(
     "i3"
     "hyprland"
@@ -125,9 +129,39 @@ install_editors() {
     done
 }
 
+# Warn before installing Hyprland/desktop configs if expected tools are missing.
+check_linux_wm_tools() {
+    local missing=()
+    local tool
+
+    for tool in Hyprland waybar rofi wl-paste; do
+        if ! command -v "$tool" &> /dev/null; then
+            missing+=("$tool")
+        fi
+    done
+
+    if [ ${#missing[@]} -gt 0 ]; then
+        log_warn "Missing Linux WM tools: ${missing[*]}"
+        log_warn "Stowing configs is OK, but Hyprland won't be launch-ready until these are installed."
+    fi
+}
+
+# Install GNOME desktop customizations
+install_gnome() {
+    if [ "$OS" == "linux" ]; then
+        log_info "Installing GNOME desktop customizations..."
+        for package in "${GNOME_PACKAGES[@]}"; do
+            stow_package "$package"
+        done
+    else
+        log_warn "Skipping GNOME packages on macOS"
+    fi
+}
+
 # Install Linux window manager packages
 install_linux_wm() {
     if [ "$OS" == "linux" ]; then
+        check_linux_wm_tools
         log_info "Installing Linux window manager packages..."
         for package in "${LINUX_WM_PACKAGES[@]}"; do
             stow_package "$package"
@@ -152,7 +186,7 @@ install_all() {
 # Unstow all packages
 uninstall_all() {
     log_info "Unstowing all packages..."
-    for package in "${CORE_PACKAGES[@]}" "${EDITOR_PACKAGES[@]}" "${LINUX_WM_PACKAGES[@]}"; do
+    for package in "${CORE_PACKAGES[@]}" "${EDITOR_PACKAGES[@]}" "${GNOME_PACKAGES[@]}" "${LINUX_WM_PACKAGES[@]}"; do
         unstow_package "$package"
     done
 }
@@ -167,6 +201,7 @@ Options:
     all                 Install all packages including Linux WM/desktop configs
     core                Install only core packages (git, zsh, tmux, kitty)
     editors             Install only editor packages (vim, nvim)
+    gnome               Install only GNOME desktop customizations
     linux-wm            Install only Linux window manager packages
     uninstall           Remove all symlinks
     restow              Restow all packages (useful after updates)
@@ -176,6 +211,7 @@ Examples:
     $0                  # Install core/editor packages
     $0 all              # Install everything, including Linux WM/desktop configs
     $0 core             # Install only core packages
+    $0 gnome            # Install GNOME desktop customizations
     $0 restow           # Restow all packages
     $0 uninstall        # Remove all symlinks
 
@@ -206,6 +242,9 @@ main() {
         editors)
             install_editors
             ;;
+        gnome)
+            install_gnome
+            ;;
         linux-wm)
             install_linux_wm
             ;;
@@ -214,7 +253,7 @@ main() {
             ;;
         restow)
             log_info "Restowing all packages..."
-            for package in "${CORE_PACKAGES[@]}" "${EDITOR_PACKAGES[@]}" "${LINUX_WM_PACKAGES[@]}"; do
+            for package in "${CORE_PACKAGES[@]}" "${EDITOR_PACKAGES[@]}" "${GNOME_PACKAGES[@]}" "${LINUX_WM_PACKAGES[@]}"; do
                 if [ -d "$DOTFILES_DIR/$package" ]; then
                     stow_package "$package" "restow"
                 fi

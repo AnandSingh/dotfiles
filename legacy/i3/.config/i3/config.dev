@@ -1,0 +1,164 @@
+# Developer i3 profile (X11 fallback)
+# Launch with: i3 -c ~/.config/i3/config.dev
+
+set $mod Mod4
+set $term kitty
+set $browser firefox
+set $filemanager nautilus
+set $menu ~/.local/bin/wm-dev-menu
+set $clipboard ~/.local/bin/wm-dev-clipboard
+set $screenshot ~/.local/bin/wm-dev-screenshot
+set $lock ~/.local/bin/wm-dev-lock
+
+set $ws1 "1:term"
+set $ws2 "2:web"
+set $ws3 "3:code"
+set $ws4 "4:ops"
+set $ws5 "5:docs"
+set $ws6 "6:chat"
+set $ws7 "7:media"
+set $ws8 "8:vm"
+set $ws9 "9:misc"
+set $ws10 "10:float"
+
+font pango:JetBrainsMono Nerd Font, Noto Sans Mono 10
+floating_modifier $mod
+focus_follows_mouse yes
+workspace_layout default
+hide_edge_borders smart
+for_window [class="^.*"] border pixel 2
+
+# Startup
+exec --no-startup-id bash -lc 'command -v dex-autostart >/dev/null && dex-autostart --autostart --environment i3 || true'
+exec --no-startup-id bash -lc 'command -v picom >/dev/null && picom || true'
+exec --no-startup-id bash -lc 'command -v nm-applet >/dev/null && nm-applet || true'
+exec --no-startup-id bash -lc 'command -v blueman-applet >/dev/null && blueman-applet || true'
+exec --no-startup-id xss-lock --transfer-sleep-lock -- ~/.local/bin/wm-dev-lock
+
+# Launchers
+bindsym $mod+Return exec --no-startup-id $term
+bindsym $mod+space exec --no-startup-id $menu
+bindsym $mod+b exec --no-startup-id $browser
+bindsym $mod+e exec --no-startup-id $filemanager
+bindsym $mod+Shift+e exec --no-startup-id $term --working-directory=$HOME/dotfiles -e nvim WM_DEV_SETUP.md
+bindsym $mod+v exec --no-startup-id $clipboard
+
+# Session and screenshots
+bindsym $mod+Shift+x exec --no-startup-id $lock
+bindsym Print exec --no-startup-id $screenshot full
+bindsym $mod+Print exec --no-startup-id $screenshot window
+bindsym Shift+Print exec --no-startup-id $screenshot area
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+q exec "i3-nagbar -t warning -m 'Exit i3?' -B 'Yes, exit' 'i3-msg exit'"
+
+# Media / brightness
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
+bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl set +10%
+bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 10%-
+bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
+bindsym XF86AudioNext exec --no-startup-id playerctl next
+bindsym XF86AudioPrev exec --no-startup-id playerctl previous
+
+# Focus and movement
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Layouts
+bindsym $mod+backslash split h
+bindsym $mod+Shift+backslash split v
+bindsym $mod+f fullscreen toggle
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+t layout toggle split
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+a focus parent
+
+# Scratchpad
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus scratchpad show
+
+# Workspaces
+bindsym $mod+1 workspace number $ws1
+bindsym $mod+2 workspace number $ws2
+bindsym $mod+3 workspace number $ws3
+bindsym $mod+4 workspace number $ws4
+bindsym $mod+5 workspace number $ws5
+bindsym $mod+6 workspace number $ws6
+bindsym $mod+7 workspace number $ws7
+bindsym $mod+8 workspace number $ws8
+bindsym $mod+9 workspace number $ws9
+bindsym $mod+0 workspace number $ws10
+
+bindsym $mod+Shift+1 move container to workspace number $ws1
+bindsym $mod+Shift+2 move container to workspace number $ws2
+bindsym $mod+Shift+3 move container to workspace number $ws3
+bindsym $mod+Shift+4 move container to workspace number $ws4
+bindsym $mod+Shift+5 move container to workspace number $ws5
+bindsym $mod+Shift+6 move container to workspace number $ws6
+bindsym $mod+Shift+7 move container to workspace number $ws7
+bindsym $mod+Shift+8 move container to workspace number $ws8
+bindsym $mod+Shift+9 move container to workspace number $ws9
+bindsym $mod+Shift+0 move container to workspace number $ws10
+
+# Routing and floating utilities
+assign [class="Firefox|firefox|Google-chrome|Chromium"] $ws2
+assign [class="Code|VSCodium|codium"] $ws3
+assign [class="Slack|discord"] $ws6
+assign [class="Virt-manager|Remmina"] $ws8
+
+for_window [class="Pavucontrol|Nm-connection-editor|Blueman-manager|Gnome-calculator|Qalculate-gtk"] floating enable, resize set 900 650, move position center
+for_window [title="Picture-in-Picture"] floating enable, sticky enable, resize set 480 270, move position 70 ppt 70 ppt
+
+mode "resize" {
+    bindsym h resize shrink width 10 px or 10 ppt
+    bindsym j resize grow height 10 px or 10 ppt
+    bindsym k resize shrink height 10 px or 10 ppt
+    bindsym l resize grow width 10 px or 10 ppt
+    bindsym Left resize shrink width 10 px or 10 ppt
+    bindsym Down resize grow height 10 px or 10 ppt
+    bindsym Up resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow width 10 px or 10 ppt
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+    bindsym $mod+r mode "default"
+}
+bindsym $mod+r mode "resize"
+
+client.focused          #89b4fa #1e1e2e #cdd6f4 #89b4fa #89b4fa
+client.focused_inactive #45475a #1e1e2e #cdd6f4 #45475a #45475a
+client.unfocused        #313244 #11111b #a6adc8 #313244 #313244
+client.urgent           #f38ba8 #1e1e2e #cdd6f4 #f38ba8 #f38ba8
+client.background       #11111b
+
+bar {
+  status_command i3status
+  position top
+  colors {
+    background #11111b
+    statusline #cdd6f4
+    separator  #45475a
+    focused_workspace  #89b4fa #89b4fa #11111b
+    active_workspace   #313244 #313244 #cdd6f4
+    inactive_workspace #11111b #11111b #a6adc8
+    urgent_workspace   #f38ba8 #f38ba8 #11111b
+  }
+}

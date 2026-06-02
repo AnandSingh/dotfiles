@@ -1,0 +1,200 @@
+# Developer Sway profile
+# Generated for ~/dotfiles. Safe defaults for Ubuntu 24.04.
+
+set $mod Mod4
+set $term kitty
+set $browser google-chrome-stable
+set $filemanager thunar
+set $menu ~/.local/bin/wm-dev-menu
+set $clipboard ~/.local/bin/wm-dev-clipboard
+set $screenshot ~/.local/bin/wm-dev-screenshot
+set $lock ~/.local/bin/wm-dev-lock
+
+set $ws1 "1:term"
+set $ws2 "2:web"
+set $ws3 "3:code"
+set $ws4 "4:ops"
+set $ws5 "5:docs"
+set $ws6 "6:chat"
+set $ws7 "7:media"
+set $ws8 "8:vm"
+set $ws9 "9:misc"
+set $ws10 "10:float"
+
+font pango:JetBrainsMono Nerd Font, Noto Sans Mono 10
+floating_modifier $mod
+focus_follows_mouse yes
+mouse_warping output
+workspace_layout default
+
+# Wayland/XWayland desktop plumbing
+xwayland enable
+exec dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+
+# Sensible visuals
+client.focused          #89b4fa #1e1e2e #cdd6f4 #89b4fa #89b4fa
+client.focused_inactive #45475a #1e1e2e #cdd6f4 #45475a #45475a
+client.unfocused        #313244 #11111b #a6adc8 #313244 #313244
+client.urgent           #f38ba8 #1e1e2e #cdd6f4 #f38ba8 #f38ba8
+client.placeholder      #313244 #11111b #cdd6f4 #313244 #313244
+
+for_window [app_id=".*"] border pixel 2
+for_window [class=".*"] border pixel 2
+hide_edge_borders smart
+smart_gaps on
+gaps inner 8
+gaps outer 4
+
+# Background: solid color until you add wallpaper tooling.
+output * bg #1e1e2e solid_color
+
+# Startup apps
+exec_always ~/.local/bin/wm-dev-waybar
+exec mako
+exec nm-applet --indicator
+exec blueman-applet
+# Twingate tray icon + connect/disconnect & auth-expiry notifications.
+# Sway does not run /etc/xdg/autostart, so start the notifier explicitly.
+exec systemctl --user start twingate-desktop-notifier
+exec kanshi
+exec swayidle -w timeout 600 '$lock' timeout 900 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' before-sleep '$lock'
+exec wl-paste --type text --watch cliphist store
+exec wl-paste --type image --watch cliphist store
+
+# Auto-start core dev apps on login (exec = initial start only, not on reload).
+# kitty launches the telisky-tmux dev session (the `tw` alias) on ws1:term.
+exec $term -e ~/.local/bin/telisky-tmux
+# Chrome -> ws2:web (routed by the assign rule below).
+exec $browser
+# Thunar file manager -> ws4:ops (routed by the assign rule below).
+exec $filemanager
+
+# App launchers
+bindsym $mod+Return exec $term
+bindsym $mod+space exec $menu
+bindsym $mod+b exec $browser
+bindsym $mod+e exec $filemanager
+bindsym $mod+Shift+e exec $term --working-directory=$HOME/dotfiles -e nvim WM_DEV_SETUP.md
+bindsym $mod+v exec $clipboard
+bindsym $mod+Shift+slash exec $term --class=cheatsheet -e nvim -R ~/.config/sway/SHORTCUTS.md
+
+# Session controls
+bindsym $mod+Shift+x exec $lock
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+q exec swaynag -t warning -m 'Exit Sway?' -B 'Yes' 'swaymsg exit'
+
+# Screenshots
+bindsym Print exec $screenshot full
+bindsym $mod+Print exec $screenshot window
+bindsym Shift+Print exec $screenshot area
+
+# Media / brightness
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86AudioMicMute exec pactl set-source-mute @DEFAULT_SOURCE@ toggle
+bindsym XF86MonBrightnessUp exec brightnessctl set +10%
+bindsym XF86MonBrightnessDown exec brightnessctl set 10%-
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+
+# Focus and movement: Vim keys + arrows
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Layout controls
+bindsym $mod+backslash split h
+bindsym $mod+Shift+backslash split v
+bindsym $mod+f fullscreen toggle
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+t layout toggle split
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+a focus parent
+
+# Scratchpad
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus scratchpad show
+
+# Workspaces
+bindsym $mod+1 workspace number $ws1
+bindsym $mod+2 workspace number $ws2
+bindsym $mod+3 workspace number $ws3
+bindsym $mod+4 workspace number $ws4
+bindsym $mod+5 workspace number $ws5
+bindsym $mod+6 workspace number $ws6
+bindsym $mod+7 workspace number $ws7
+bindsym $mod+8 workspace number $ws8
+bindsym $mod+9 workspace number $ws9
+bindsym $mod+0 workspace number $ws10
+
+bindsym $mod+Shift+1 move container to workspace number $ws1
+bindsym $mod+Shift+2 move container to workspace number $ws2
+bindsym $mod+Shift+3 move container to workspace number $ws3
+bindsym $mod+Shift+4 move container to workspace number $ws4
+bindsym $mod+Shift+5 move container to workspace number $ws5
+bindsym $mod+Shift+6 move container to workspace number $ws6
+bindsym $mod+Shift+7 move container to workspace number $ws7
+bindsym $mod+Shift+8 move container to workspace number $ws8
+bindsym $mod+Shift+9 move container to workspace number $ws9
+bindsym $mod+Shift+0 move container to workspace number $ws10
+
+# App routing
+assign [app_id="firefox"] $ws2
+assign [class="Firefox"] $ws2
+assign [app_id="google-chrome"] $ws2
+assign [class="Google-chrome"] $ws2
+assign [app_id="code"] $ws3
+assign [class="Code"] $ws3
+assign [app_id="codium"] $ws3
+assign [class="VSCodium"] $ws3
+assign [app_id="thunar"] $ws4
+assign [app_id="Slack"] $ws6
+assign [class="Slack"] $ws6
+assign [class="discord"] $ws6
+assign [app_id="org.remmina.Remmina"] $ws8
+
+# Floating utility windows
+for_window [app_id="pavucontrol"] floating enable, resize set 900 650
+for_window [class="Pavucontrol"] floating enable, resize set 900 650
+for_window [app_id="nm-connection-editor"] floating enable
+for_window [class="Nm-connection-editor"] floating enable
+for_window [app_id="blueman-manager"] floating enable
+for_window [title="Picture-in-Picture"] floating enable, sticky enable, resize set 480 270, move position 70 ppt 70 ppt
+# Cheatsheet popup (Super+Shift+/): floating, centered, dismiss with q
+for_window [app_id="cheatsheet"] floating enable, resize set 960 720, move position center
+
+mode "resize" {
+    bindsym h resize shrink width 10px
+    bindsym j resize grow height 10px
+    bindsym k resize shrink height 10px
+    bindsym l resize grow width 10px
+    bindsym Left resize shrink width 10px
+    bindsym Down resize grow height 10px
+    bindsym Up resize shrink height 10px
+    bindsym Right resize grow width 10px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+    bindsym $mod+r mode "default"
+}
+bindsym $mod+r mode "resize"
+
+include ~/.config/sway/config.d/*.conf

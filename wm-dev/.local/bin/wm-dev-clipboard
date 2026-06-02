@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v cliphist >/dev/null 2>&1; then
+  notify-send "Clipboard history" "cliphist is not installed" 2>/dev/null || true
+  exit 1
+fi
+
+pick() {
+  if command -v fuzzel >/dev/null 2>&1; then
+    fuzzel --dmenu --prompt 'clip> '
+  elif command -v wofi >/dev/null 2>&1; then
+    wofi --dmenu --prompt 'clip> '
+  elif command -v rofi >/dev/null 2>&1; then
+    rofi -dmenu -i -p 'clip'
+  elif command -v dmenu >/dev/null 2>&1; then
+    dmenu -i -p 'clip'
+  else
+    return 1
+  fi
+}
+
+selection="$(cliphist list | pick || true)"
+[ -n "$selection" ] || exit 0
+
+if command -v wl-copy >/dev/null 2>&1; then
+  printf '%s' "$selection" | cliphist decode | wl-copy
+elif command -v xclip >/dev/null 2>&1; then
+  printf '%s' "$selection" | cliphist decode | xclip -selection clipboard
+else
+  notify-send "Clipboard history" "No clipboard copy tool found" 2>/dev/null || true
+  exit 1
+fi
