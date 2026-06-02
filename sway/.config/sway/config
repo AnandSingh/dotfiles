@@ -9,6 +9,9 @@ set $menu ~/.local/bin/wm-dev-menu
 set $clipboard ~/.local/bin/wm-dev-clipboard
 set $screenshot ~/.local/bin/wm-dev-screenshot
 set $lock ~/.local/bin/wm-dev-lock
+# VSCode-family editor. `code` covers VSCodium/code-oss/VSCode.
+# Override per machine in config.d/local.conf (Fedora uses code-fb).
+set $editor code
 
 set $ws1 "1:term"
 set $ws2 "2:web"
@@ -27,10 +30,20 @@ focus_follows_mouse yes
 mouse_warping output
 workspace_layout default
 
-# Wayland/XWayland desktop plumbing
+# Wayland/XWayland desktop plumbing.
 xwayland enable
-exec dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
-exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+# Force XDG_CURRENT_DESKTOP=sway. Launched from a GDM "Sway" session it can
+# inherit "ubuntu:GNOME", which makes xdg-desktop-portal load the GNOME backend.
+# Outside gnome-shell that backend hangs ~25s, the portal service fails, and
+# every portal client (waybar) times out and exits — leaving no top bar.
+# Backend selection lives in ~/.config/xdg-desktop-portal/sway-portals.conf.
+# One ordered shell so env is set before the portal is (re)started.
+exec sh -c '\
+  systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK; \
+  systemctl --user set-environment XDG_CURRENT_DESKTOP=sway XDG_SESSION_TYPE=wayland; \
+  dbus-update-activation-environment --systemd XDG_CURRENT_DESKTOP=sway XDG_SESSION_TYPE=wayland DISPLAY WAYLAND_DISPLAY SWAYSOCK; \
+  systemctl --user reset-failed xdg-desktop-portal.service 2>/dev/null; \
+  systemctl --user restart xdg-desktop-portal.service'
 
 # Sensible visuals
 client.focused          #89b4fa #1e1e2e #cdd6f4 #89b4fa #89b4fa
@@ -76,6 +89,7 @@ bindsym $mod+Return exec $term
 bindsym $mod+space exec $menu
 bindsym $mod+b exec $browser
 bindsym $mod+e exec $filemanager
+bindsym $mod+c exec $editor
 bindsym $mod+Shift+e exec $term --working-directory=$HOME/dotfiles -e nvim WM_DEV_SETUP.md
 bindsym $mod+v exec $clipboard
 bindsym $mod+Shift+slash exec $term --class=cheatsheet -e nvim -R ~/.config/sway/SHORTCUTS.md
