@@ -197,6 +197,41 @@ set_default_shell() {
     fi
 }
 
+# Seed the per-machine Sway override (config.d/local.conf) from the OS template.
+# local.conf is git-ignored so each host keeps its own monitors/inputs without
+# clobbering the others. Skips if the host already has one.
+seed_sway_local() {
+    local repo_dir
+    repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    local conf_dir="$repo_dir/sway/.config/sway/config.d"
+    local examples="$repo_dir/sway/.config/sway/examples"
+    local target="$conf_dir/local.conf"
+
+    if [ ! -d "$examples" ]; then
+        log_warn "Sway examples dir missing, skipping local.conf seed."
+        return
+    fi
+
+    if [ -f "$target" ]; then
+        log_info "Sway local.conf already exists, leaving it untouched."
+        return
+    fi
+
+    local template
+    case "$OS" in
+        fedora) template="$examples/local.fedora-desktop.conf" ;;
+        ubuntu) template="$examples/local.ubuntu-laptop.conf" ;;
+        *)      template="$examples/local.conf.example" ;;
+    esac
+
+    [ -f "$template" ] || template="$examples/local.conf.example"
+
+    mkdir -p "$conf_dir"
+    cp "$template" "$target"
+    log_info "Seeded Sway local.conf from $(basename "$template")"
+}
+
 # Main installation flow
 main() {
     log_info "Starting dotfiles bootstrap process..."
@@ -215,6 +250,9 @@ main() {
     echo
 
     set_default_shell
+    echo
+
+    seed_sway_local
     echo
 
     log_info "Bootstrap complete!"

@@ -42,6 +42,7 @@ client.placeholder      #313244 #11111b #cdd6f4 #313244 #313244
 for_window [app_id=".*"] border pixel 2
 for_window [class=".*"] border pixel 2
 hide_edge_borders smart
+smart_borders on
 smart_gaps on
 gaps inner 8
 gaps outer 4
@@ -101,6 +102,10 @@ bindsym XF86AudioPlay exec playerctl play-pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
+# Alt+Tab to cycle windows (familiar from GNOME/Windows)
+bindsym Alt+Tab focus next
+bindsym Alt+Shift+Tab focus prev
+
 # Focus and movement: Vim keys + arrows
 bindsym $mod+h focus left
 bindsym $mod+j focus down
@@ -157,6 +162,10 @@ bindsym $mod+Shift+8 move container to workspace number $ws8
 bindsym $mod+Shift+9 move container to workspace number $ws9
 bindsym $mod+Shift+0 move container to workspace number $ws10
 
+# Mouse-wheel over a window with $mod switches workspace
+bindsym --whole-window $mod+button4 workspace prev_on_output
+bindsym --whole-window $mod+button5 workspace next_on_output
+
 # App routing
 assign [app_id="firefox"] $ws2
 assign [class="Firefox"] $ws2
@@ -178,6 +187,10 @@ for_window [class="Pavucontrol"] floating enable, resize set 900 650
 for_window [app_id="nm-connection-editor"] floating enable
 for_window [class="Nm-connection-editor"] floating enable
 for_window [app_id="blueman-manager"] floating enable
+for_window [app_id="org.gnome.Calculator"] floating enable
+for_window [app_id="xdg-desktop-portal-gtk"] floating enable
+for_window [window_role="pop-up"] floating enable
+for_window [window_role="dialog"] floating enable
 for_window [title="Picture-in-Picture"] floating enable, sticky enable, resize set 480 270, move position 70 ppt 70 ppt
 # Cheatsheet popup (Super+Shift+/): floating, centered, dismiss with q
 for_window [app_id="cheatsheet"] floating enable, resize set 960 720, move position center
