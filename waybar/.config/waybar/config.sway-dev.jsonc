@@ -37,7 +37,7 @@
     "format": "{icon} {volume}%",
     "format-muted": "󰖁 muted",
     "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
-    "on-click": "pavucontrol"
+    "on-click": "pkill -x pavucontrol || pavucontrol"
   },
   "network": {
     "format-wifi": "󰤨 {essid}",
