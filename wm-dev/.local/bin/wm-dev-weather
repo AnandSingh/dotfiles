@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Waybar weather widget via wttr.in.
+# Outputs JSON: {"text": "<icon><temp>", "tooltip": "<details>"}.
+# Bar shows a compact icon+temp; hover for location/condition/humidity/wind.
+# Location auto-detects by IP; override with WTTR_LOCATION (e.g. "Bengaluru").
+set -uo pipefail
+
+loc="${WTTR_LOCATION:-}"
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/wm-dev-weather.json"
+mkdir -p "$(dirname "$cache")"
+
+# Serve cache if it is fresher than 15 minutes (avoid hammering wttr.in).
+if [ -f "$cache" ]; then
+  age=$(( $(date +%s) - $(stat -c %Y "$cache" 2>/dev/null || echo 0) ))
+  [ "$age" -lt 900 ] && { cat "$cache"; exit 0; }
+fi
+
+esc() { sed 's/\\/\\\\/g; s/"/\\"/g'; }
+
+text=$(curl -fsm 6 "https://wttr.in/${loc}?format=%c%t" 2>/dev/null | tr -d '+' | xargs)
+tip=$(curl -fsm 6 "https://wttr.in/${loc}?format=%l:+%C+%t+(feels+%f)+%h+%w" 2>/dev/null | xargs)
+
+if [ -z "$text" ]; then
+  # Network failed: reuse stale cache if present, else show nothing graceful.
+  [ -f "$cache" ] && { cat "$cache"; exit 0; }
+  echo '{"text":"","tooltip":"weather unavailable"}'
+  exit 0
+fi
+
+printf '{"text":"%s","tooltip":"%s"}\n' "$(printf '%s' "$text" | esc)" "$(printf '%s' "$tip" | esc)" \
+  | tee "$cache"

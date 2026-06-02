@@ -50,7 +50,7 @@ cd ~/dotfiles
 # Step 1: Install dependencies
 ./bootstrap.sh
 
-# Step 2: Install dotfiles
+# Step 2: Install safe default dotfiles (core/editor)
 ./install.sh
 ```
 
@@ -59,9 +59,10 @@ cd ~/dotfiles
 ```bash
 # After running bootstrap.sh, install only what you need:
 
-./install.sh core        # Just git, zsh, tmux
+./install.sh core        # Just git, zsh, tmux, kitty
 ./install.sh editors     # Just vim and nvim
 ./install.sh linux-wm    # Just window managers (Linux only)
+./install.sh all         # Everything, including window managers
 ```
 
 ## Platform-Specific Instructions

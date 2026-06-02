@@ -5,3 +5,7 @@
 *.swo
 *~
 .claude/
+
+# Per-machine Sway overrides (monitors, inputs, machine-only apps).
+# Seeded from sway/.config/sway/examples/ by bootstrap.sh on each host.
+sway/.config/sway/config.d/local.conf

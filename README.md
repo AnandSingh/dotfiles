@@ -66,20 +66,20 @@ This will:
 
 ### Install Dotfiles
 
-After bootstrapping, install your dotfiles:
+After bootstrapping, install the safe default dotfiles (core shell, terminal, and editor configs):
 
 ```bash
 ./install.sh
 ```
 
-That's it! Restart your terminal and you're ready to go.
+That's it! Restart your terminal and you're ready to go. Desktop/window-manager configs are installed only when requested.
 
 ## Advanced Usage
 
 ### Install Specific Packages
 
 ```bash
-# Install only core tools (git, zsh, tmux)
+# Install only core tools (git, zsh, tmux, kitty)
 ./install.sh core
 
 # Install only editors (vim, nvim)
@@ -88,7 +88,7 @@ That's it! Restart your terminal and you're ready to go.
 # Install Linux window manager configs (Linux only)
 ./install.sh linux-wm
 
-# Install everything
+# Install everything, including desktop/window-manager configs
 ./install.sh all
 ```
 

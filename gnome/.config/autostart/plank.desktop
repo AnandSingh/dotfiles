@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Plank Dock
+Comment=Start Plank dock on GNOME login
+Exec=sh -lc 'command -v plank >/dev/null 2>&1 && exec plank'
+OnlyShowIn=GNOME;Unity;XFCE;MATE;
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+Terminal=false
+Categories=Utility;

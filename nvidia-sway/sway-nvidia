@@ -1,0 +1,21 @@
+#!/bin/sh
+# Sway launch wrapper for the proprietary Nvidia driver.
+#
+# Why this exists: gdm's session picker only runs the Exec= line of a
+# .desktop file -- it cannot pass flags or env vars. Plain `sway` is rejected
+# by wlroots on the proprietary Nvidia driver ("Proprietary Nvidia drivers are
+# NOT supported"), so we must launch `sway --unsupported-gpu` plus a few
+# Nvidia-Wayland env vars that have to be set BEFORE sway starts (too late to
+# put them in sway's own config).
+#
+# modeset=1 is already enabled on this host via
+# /etc/modprobe.d/nvidia-graphics-drivers-kms.conf (options nvidia_drm modeset=1).
+#
+# Installed to /usr/local/bin/sway-nvidia by ./install-nvidia-session.sh.
+export WLR_NO_HARDWARE_CURSORS=1
+export WLR_RENDERER=gles2
+export __GLX_VENDOR_LIBRARY_NAME=nvidia
+export GBM_BACKEND=nvidia-drm
+export XDG_SESSION_TYPE=wayland
+export MOZ_ENABLE_WAYLAND=1
+exec sway --unsupported-gpu

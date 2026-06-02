@@ -1,0 +1,62 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "spacing": 8,
+  "margin-top": 6,
+  "margin-left": 10,
+  "margin-right": 10,
+  "modules-left": ["sway/workspaces", "sway/mode"],
+  "modules-center": ["clock"],
+  "modules-right": ["custom/weather", "tray", "idle_inhibitor", "pulseaudio", "network", "cpu", "memory", "battery", "custom/power"],
+
+  "sway/workspaces": {
+    "disable-scroll": false,
+    "all-outputs": true,
+    "format": "{name}",
+    "persistent-workspaces": {
+      "1:term": [], "2:web": [], "3:code": [], "4:ops": [], "5:docs": [],
+      "6:chat": [], "7:media": [], "8:vm": [], "9:misc": [], "10:float": []
+    }
+  },
+  "sway/mode": { "format": "<span color='#f38ba8'> {}</span>" },
+  "clock": {
+    "interval": 60,
+    "format": "󰃰 {:%a %d %b  %H:%M}",
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+  },
+  "custom/weather": {
+    "exec": "~/.local/bin/wm-dev-weather",
+    "return-type": "json",
+    "interval": 900,
+    "on-click": "~/.local/bin/wm-dev-weather"
+  },
+  "tray": { "spacing": 10 },
+  "idle_inhibitor": { "format": "{icon}", "format-icons": { "activated": "󰅶", "deactivated": "󰾪" } },
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "󰖁 muted",
+    "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
+    "on-click": "pkill -x pavucontrol || pavucontrol"
+  },
+  "network": {
+    "format-wifi": "󰤨 {essid}",
+    "format-ethernet": "󰈀 {ipaddr}/{cidr}",
+    "format-disconnected": "󰤭 offline",
+    "tooltip-format": "{ifname}: {ipaddr}"
+  },
+  "cpu": { "interval": 5, "format": "󰻠 {usage}%" },
+  "memory": { "interval": 5, "format": "󰍛 {}%" },
+  "battery": {
+    "states": { "warning": 30, "critical": 15 },
+    "format": "{icon} {capacity}%",
+    "format-charging": "󰂄 {capacity}%",
+    "format-plugged": "󰚥 {capacity}%",
+    "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+  },
+  "custom/power": {
+    "format": "󰐥",
+    "tooltip": false,
+    "on-click": "wlogout || swaynag -t warning -m 'Exit session?' -B 'Exit' 'swaymsg exit'"
+  }
+}

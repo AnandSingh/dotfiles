@@ -26,7 +26,7 @@ cd ~/dotfiles
 git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./bootstrap.sh  # Install dependencies
-./install.sh    # Install dotfiles
+./install.sh    # Install safe default dotfiles (core/editor)
 ```
 
 ### Method 3: Selective Install
@@ -34,9 +34,10 @@ cd ~/dotfiles
 git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./bootstrap.sh
-./install.sh core       # Just git, zsh, tmux
+./install.sh core       # Just git, zsh, tmux, kitty
 ./install.sh editors    # Just vim, nvim
 ./install.sh linux-wm   # Just window managers
+./install.sh all        # Everything, including window managers
 ```
 
 ---

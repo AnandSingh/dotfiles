@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v fuzzel >/dev/null 2>&1; then
+  exec fuzzel --show-actions
+elif command -v wofi >/dev/null 2>&1; then
+  exec wofi --show drun
+elif command -v rofi >/dev/null 2>&1; then
+  exec rofi -show drun -modi drun,run,window
+elif command -v dmenu_run >/dev/null 2>&1; then
+  exec dmenu_run
+else
+  notify-send "wm-dev" "No launcher found. Install fuzzel, wofi, rofi, or dmenu." 2>/dev/null || true
+  exit 1
+fi
