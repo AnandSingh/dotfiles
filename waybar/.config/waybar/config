@@ -1,193 +1,148 @@
 {
-    "layer": "top", // Waybar at top layer
-    "position": "top", // Waybar position (top|bottom|left|right)
-    // "height": 36, // Waybar height (to be removed for auto height)
-    // Archived modules
-    // "custom/gpu", "bluetooth",  "custom/weather", "temperature", "sway/window"
-    // Choose the order of the modules
-    "modules-left": [ "clock", "custom/weather", "idle_inhibitor"],
-    "modules-center": ["hyprland/workspaces"],
-    "modules-right": [ "custom/gpu", "custom/cpugovernor", "cpu", "temperature", "pulseaudio", "pulseaudio#microphone", "bluetooth", "network", "tray"],
-    // Modules configuration
-    "hyprland/workspaces": {
-        "disable-scroll": true,
-        "show-special": false,
-        "all-outputs": true,
-        "format": "{icon}",
-        "format-icons": {
-            "1": "1",
-            "2": "2",
-            "3": "3",
-            "4": "4",
-            "urgent": "",
-            "focused": "",
-            "default": ""
+    "layer": "top",
+    "position": "top",
+    "height": 32,
+    "spacing": 0,
+
+    "modules-left": ["sway/workspaces", "sway/mode", "sway/scratchpad"],
+    "modules-center": ["custom/weather", "clock"],
+    "modules-right": ["idle_inhibitor", "cpu", "memory", "temperature", "pulseaudio", "network", "bluetooth", "battery", "tray", "custom/notification"],
+
+    "sway/workspaces": {
+        "disable-scroll": false,
+        "all-outputs": false,
+        "format": "{name}"
+    },
+
+    "sway/mode": {
+        "format": " {}"
+    },
+
+    "sway/scratchpad": {
+        "format": "{icon} {count}",
+        "show-empty": false,
+        "format-icons": ["", ""],
+        "tooltip": true,
+        "tooltip-format": "{app}: {title}"
+    },
+
+    "clock": {
+        "format": "{:%a %b %d  %H:%M}",
+        "format-alt": "{:%A, %B %d, %Y  %H:%M:%S}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "interval": 1,
+        "calendar": {
+            "mode": "month",
+            "mode-mon-col": 3,
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "format": {
+                "months": "<span color='#f5e0dc'><b>{}</b></span>",
+                "days": "<span color='#cdd6f4'>{}</span>",
+                "weeks": "<span color='#94e2d5'>W{}</span>",
+                "weekdays": "<span color='#f9e2af'><b>{}</b></span>",
+                "today": "<span color='#f38ba8'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
         }
     },
-    "bluetooth": {
-        "format": "",
-        "format-disabled": "󰂳",
-        "format-connected": "󰂱 {num_connections}",
-        "tooltip-format": " {device_alias}",
-        "tooltip-format-connected": "{device_enumerate}",
-        "tooltip-format-enumerate-connected": " {device_alias} 󰂄{device_battery_percentage}%",
-        "tooltip": true,
-        "on-click": "blueman-manager",
+
+    "custom/weather": {
+        "format": "{}",
+        "interval": 1800,
+        "exec": "curl -s 'https://wttr.in/?format=%c+%t' 2>/dev/null || echo ''",
+        "tooltip-format": "{}",
+        "exec-if": "ping -c1 -W2 wttr.in >/dev/null 2>&1"
     },
-//    "bluetooth": {
-//        "interval": 30,
-//        "format": "{icon}",
-//        // "format-alt": "{status}",
-//        "format-icons": {
-//            "enabled": "",
-//            "disabled": "󰂳",
-//        },
-//       "on-click": "blueman-manager"
-//    },    
-    "sway/language": {
-        "format": "<big></big> {}",
-        "max-length": 5,
-        "min-length": 5,        
-    },
+
     "idle_inhibitor": {
         "format": "{icon}",
         "format-icons": {
-            "activated": "",
-            "deactivated": ""
-        },
-        "tooltip": "true"
+            "activated": "",
+            "deactivated": ""
+        }
     },
-    "tray": {
-        //"icon-size": 11,
-        "spacing": 5
-    },
-    "clock": {
-        "format": "  {:%H:%M   %e %b}",
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
-        "today-format": "<b>{}</b>",
-        "on-click": "gnome-calendar"
-    },
+
     "cpu": {
-        "interval": "1",      
-        "format": "{max_frequency} GHz <span color=\"darkgray\">| {usage}%</span>",
-        "max-length": 13,
-        "min-length": 13,
-        "on-click": "alacritty -e htop --sort-key PERCENT_CPU",
-        "tooltip": false
-    },
-    "temperature": {
-        //"thermal-zone": 1,
-        "interval": "10",
-        "hwmon-path": "/sys/class/hwmon/hwmon3/temp1_input",
-        "critical-threshold": 74,
-        "format-critical": "  {temperatureC}°C",
-        "format": "{icon}  {temperatureC}°C",
-        "format-icons": ["", "", ""],
-        "max-length": 7,
-        "min-length": 7
-    },
-    "network": {
-        // "interface": "wlan0", // (Optional) To force the use of this interface,
-        "format-wifi": "  {essid}",
-        "format-ethernet": "{ifname}: {ipaddr}/{cidr} 󰌘",
-        "format-linked": "󰈁 {ifname} (No IP)",
-        "format-disconnected": "󰌙",
-        "format-alt": "{ifname}: {ipaddr}/{cidr}",
-        "family": "ipv4",
-        "tooltip-format-wifi": "  {ifname} @ {essid}\nIP: {ipaddr}\nStrength: {signalStrength}%\nFreq: {frequency}MHz\n {bandwidthUpBits}  {bandwidthDownBits}",
-        "tooltip-format-ethernet": "󰌘 {ifname}\nIP: {ipaddr}\n {bandwidthUpBits}  {bandwidthDownBits}"
-    },
-    "pulseaudio": {
-        "scroll-step": 3, // %, can be a float
-        "format": "{icon} {volume}%",
-        "format-bluetooth": "{volume}% {icon}",
-        "format-bluetooth-muted": "󰖁 {icon}",
-        //"format-bluetooth-muted": "󰖁 {icon}",
-	    "format-muted": "󰖁 ",
-        //"format-muted": " {format_source}",
-        //"format-source": "{volume}% ",
-        //"format-source-muted": "",
-        //"format-source": "",
-        //"format-source-muted": "",
-        "format-icons": {
-            "headphone": "",
-            "hands-free": "",
-            "headset": "",
-            "phone": "",
-            "portable": "",
-            "car": "",
-            "default": ["", "", ""]
-        },
-        "on-click": "~/.config/hypr/scripts/Volume.sh --toggle",
-        "on-click-right": "pavucontrol -t 3"
-        //"on-click": "pavucontrol",
-        //"on-click-right": "pactl set-source-mute @DEFAULT_SOURCE@ toggle"
-    },
-    "pulseaudio#microphone": {
-        "format": "{format_source}",
-        "format-source": " {volume}%",
-        "format-source-muted": "",
-        "on-click": "~/.config/hypr/scripts/Volume.sh --toggle-mic",
-        "on-click-right": "pavucontrol -t 4",
-        "tooltip-format": "{source_desc} | {source_volume}%",
-        "scroll-step": 5,
-    },
-    //"custom/weather": {
-    //    "format": "{}",
-    //    "format-alt": "{alt}: {}",
-    //    "format-alt-click": "click",
-    //    "interval": 3600,
-    //    "return-type": "json",
-    //    "exec": "bash ~/.config/hypr/userscripts/weather.sh",
-    //    //"exec": "~/.config/hypr/userscripts/weather.py",
-    //    "exec-if": "ping wttr.in -c1",
-    //    "tooltip": true,
-    //},
-    "custom/weather": {
-        "exec": "curl 'https://wttr.in/?format=1'",
-        "interval": 3600
-    },
-    "custom/gpu": {
-      "exec": "bash $HOME/.config/waybar/custom_modules/custom-gpu.sh",
-      "return-type": "json",
-      "format": "  {}",
-      "interval": 5,
-      "tooltip": "{tooltip}",
-      "max-length": 19,
-      "min-length": 19,
-      "on-click": "powerupp"
-      
-    }, 
-    "custom/cpugovernor": {
-      "format": "{icon}",
-      "interval": "30",
-      "return-type": "json",
-      "exec": "bash $HOME/.config/waybar/custom_modules/cpugovernor.sh",
-      "min-length": 2,
-      "max-length": 2,
-        "format-icons": {
-            "perf": "",
-            "sched": ""
-        },
-    },    
-    "custom/media": {
-        "format": "{icon} {}",
-        "return-type": "json",
-        "max-length": 40,
-        "format-icons": {
-            "spotify": "",
-            "default": "🎜"
-        },
-        "escape": true,
-        "exec": "$HOME/.config/waybar/mediaplayer.py 2> /dev/null" // Script in resources folder
-        // "exec": "$HOME/.config/waybar/mediaplayer.py --player spotify 2> /dev/null" // Filter player based on name
-    },
-    "custom/scratchpad-indicator": {
+        "format": " {usage}%",
         "interval": 3,
+        "tooltip": true
+    },
+
+    "memory": {
+        "format": " {}%",
+        "interval": 5
+    },
+
+    "temperature": {
+        "critical-threshold": 80,
+        "format": "{icon} {temperatureC}°C",
+        "format-icons": ["", "", ""]
+    },
+
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-bluetooth": "{icon} {volume}%",
+        "format-muted": " muted",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click-right": "pavucontrol",
+        "scroll-step": 2
+    },
+
+    "network": {
+        "format-wifi": " {signalStrength}%",
+        "format-ethernet": " {ifname}",
+        "format-disconnected": "⚠ disconnected",
+        "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n{essid}",
+        "on-click": "nm-connection-editor"
+    },
+
+    "bluetooth": {
+        "format": "",
+        "format-disabled": "󰂳",
+        "format-connected": "󰂱 {num_connections}",
+        "tooltip-format-connected": "{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias} {device_battery_percentage}%",
+        "on-click": "blueman-manager"
+    },
+
+    "battery": {
+        "states": {
+            "good": 80,
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": " {capacity}%",
+        "format-plugged": " {capacity}%",
+        "format-icons": ["", "", "", "", ""]
+    },
+
+    "tray": {
+        "icon-size": 16,
+        "spacing": 8
+    },
+
+    "custom/notification": {
+        "tooltip": false,
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "󰂚",
+            "none": "󰂜",
+            "dnd-notification": "󰂛",
+            "dnd-none": "󰪑"
+        },
         "return-type": "json",
-        "exec": "swaymsg -t get_tree | jq --unbuffered --compact-output '( select(.name == \"root\") | .nodes[] | select(.name == \"__i3\") | .nodes[] | select(.name == \"__i3_scratch\") | .focus) as $scratch_ids | [..  | (.nodes? + .floating_nodes?) // empty | .[] | select(.id |IN($scratch_ids[]))] as $scratch_nodes | { text: \"\\($scratch_nodes | length)\", tooltip: $scratch_nodes | map(\"\\(.app_id // .window_properties.class) (\\(.id)): \\(.name)\") | join(\"\\n\") }'",
-        "format": "{} 􏠜",
-        "on-click": "exec swaymsg 'scratchpad show'",
-        "on-click-right": "exec swaymsg 'move scratchpad'"
-    }    
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "swaync-client -t -sw",
+        "escape": true
+    }
 }
