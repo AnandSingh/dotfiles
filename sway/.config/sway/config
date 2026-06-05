@@ -76,6 +76,7 @@ exec {
 exec swaymsg "workspace 1; exec $term -e tmux new-session -A -s main"
 exec swaymsg "workspace 2; exec $browser"
 exec swaymsg "workspace 7; exec $browser --new-window --app=https://chat.google.com"
+exec ~/.config/sway/scripts/dropdown-autohide.sh
 
 # ==================== Key Bindings — Apps ====================
 
