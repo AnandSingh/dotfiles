@@ -223,6 +223,7 @@ for_window [app_id="dropdown"] {
     floating enable
     resize set 60 ppt 40 ppt
     move position center
+    border pixel 4
     move to scratchpad
     scratchpad show
 }
