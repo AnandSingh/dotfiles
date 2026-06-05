@@ -111,19 +111,53 @@ source $ZSH/oh-my-zsh.sh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 #
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
+# ==================== Editor ====================
 
-# Center prompt — push it down from the top
-alias clear='command clear && printf "\n%.0s" {1..25}'
+export EDITOR='nvim'
+export VISUAL='nvim'
+
+# ==================== Aliases ====================
+
+alias vim='nvim'
+alias vi='nvim'
+alias v='nvim'
+
+# Dotfiles
+alias dots='cd ~/dotfiles'
+alias zrc='$EDITOR ~/dotfiles/zsh/.zshrc'
+alias src='source ~/.zshrc'
+
+# Navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# ls (eza if available, else ls)
+if command -v eza &>/dev/null; then
+    alias ls='eza --icons'
+    alias ll='eza -la --icons --git'
+    alias lt='eza -T --icons --level=2'
+else
+    alias ls='ls --color=auto'
+    alias ll='ls -la'
+fi
+
+# Git shortcuts (beyond oh-my-zsh git plugin)
+alias glog='git log --oneline --graph --decorate -20'
+alias gd='git diff'
+alias gds='git diff --staged'
+
+# Quick find
+alias ff='find . -type f -name'
+alias fd='find . -type d -name'
+
+# System
+alias df='df -h'
+alias free='free -h'
+alias ports='ss -tulnp'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-if [ -f ~/.bashrc_private ]; then
-	. ~/.bashrc_private
-fi
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
@@ -140,3 +174,5 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+# Machine-specific config (CUDA, local paths, etc.)
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
