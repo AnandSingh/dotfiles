@@ -221,9 +221,9 @@ for_window [class="Google Chat"] focus
 # Dropdown terminal — centered, quake-style
 for_window [app_id="dropdown"] {
     floating enable
-    resize set 60 ppt 40 ppt
+    resize set 50 ppt 40 ppt
     move position center
-    border pixel 4
+    border pixel 2
     move to scratchpad
     scratchpad show
 }
