@@ -16,19 +16,38 @@ This dotfiles repository uses [GNU Stow](https://www.gnu.org/software/stow/) for
 ### Core Tools
 - **Git**: Version control configuration
 - **Zsh**: Shell with Oh My Zsh, powerlevel10k theme, and useful plugins
-- **Tmux**: Terminal multiplexer for efficient workflow
+- **Tmux**: Terminal multiplexer with auto-save/restore (resurrect + continuum)
 
 ### Editors
 - **Vim**: Classic text editor with sensible defaults
 - **Neovim**: Modern Vim with plugins
 
+### Terminal
+- **Kitty**: GPU-accelerated terminal (auto-attaches to tmux)
+
 ### Linux Window Managers (Linux only)
-- **i3**: Tiling window manager
+- **Sway**: Wayland tiling compositor (primary) — quake dropdown terminal, tabbed Chrome profiles, auto-focus workspaces
+- **i3**: Tiling window manager (X11 fallback)
 - **Hyprland**: Wayland compositor
 - **Waybar**: Status bar for Wayland
 - **Polybar**: Status bar for X11
 - **Picom**: Compositor for X11
 - Additional: xprofile, xresources, volumeicon, screenz
+
+### Dev Tools (installed via bootstrap)
+- **eza**: Modern `ls` with icons and git status
+- **fd**: Fast `find` replacement
+- **ripgrep**: Fast `grep` replacement
+- **fzf**: Fuzzy finder
+- **bat**: `cat` with syntax highlighting
+- **zoxide**: Smarter `cd` — learns your frequent dirs
+- **delta**: Beautiful git diffs with syntax highlighting
+- **lazygit**: Terminal UI for git
+- **btop**: System monitor
+- **dust**: Visual disk usage
+- **duf**: Pretty `df` replacement
+- **tldr**: Simplified man pages
+- **glow**: Render markdown in terminal
 
 ## Quick Start
 
@@ -60,9 +79,12 @@ cd ~/dotfiles
 This will:
 1. Detect your OS (macOS, Fedora, or Ubuntu)
 2. Install required packages (stow, zsh, tmux, neovim, etc.)
-3. Install Oh My Zsh with plugins and powerlevel10k theme
-4. Install vim-plug for Neovim
-5. Set Zsh as your default shell
+3. Install dev tools (eza, fd, zoxide, delta, lazygit, btop, etc.)
+4. Setup passwordless sudo for safe commands (dnf, systemctl, reboot, etc.)
+5. Install Oh My Zsh with plugins and powerlevel10k theme
+6. Install vim-plug for Neovim
+7. Install TPM for Tmux
+8. Set Zsh as your default shell
 
 ### Install Dotfiles
 
@@ -126,31 +148,49 @@ Each directory is a "stow package" that contains dotfiles for a specific tool:
 
 ```
 dotfiles/
-├── git/              # Git configuration
-├── zsh/              # Zsh configuration
-├── tmux/             # Tmux configuration
-├── vim/              # Vim configuration
-├── nvim/             # Neovim configuration
-├── i3/               # i3 window manager
-├── hyprland/         # Hyprland compositor
-├── waybar/           # Waybar status bar
-├── polybar/          # Polybar status bar
-├── picom/            # Picom compositor
+├── bootstrap.sh          # System setup (packages, sudoers, plugins)
+├── install.sh            # Stow symlinks
+├── git/                  # Git configuration
+├── zsh/                  # Zsh + aliases + dev shortcuts
+├── tmux/                 # Tmux with resurrect + continuum
+├── kitty/                # Kitty terminal (auto-attach tmux)
+├── vim/                  # Vim configuration
+├── nvim/                 # Neovim configuration
+├── sway/                 # Sway compositor + dropdown terminal
+│   └── scripts/          # Sway helper scripts
+├── waybar/               # Waybar status bar
+├── i3/                   # i3 window manager
+├── hyprland/             # Hyprland compositor
+├── polybar/              # Polybar status bar
+├── picom/                # Picom compositor
 └── ...
 ```
 
 ## Customization
 
-### Private Configuration
+### Machine-Specific Configuration
 
-For machine-specific or private settings, use `.bashrc_private`:
+For machine-specific settings (CUDA paths, local env vars), use `~/.zshrc.local`:
 
 ```bash
-# ~/.bashrc_private
-export PRIVATE_API_KEY="your-key-here"
+# ~/.zshrc.local (not tracked in git)
+export PATH=/usr/local/cuda-12.8/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64:${LD_LIBRARY_PATH}
 ```
 
 This file is sourced by `.zshrc` if it exists.
+
+### Passwordless Sudo
+
+Bootstrap configures passwordless sudo for safe commands:
+- `dnf` — package management
+- `systemctl` — service management
+- `reboot` / `poweroff` — system control
+- `mount` / `umount` — drives
+- `dmesg` / `journalctl` — logs
+- `nmap` — network scanning
+
+Config lives at `/etc/sudoers.d/nopasswd-safe`.
 
 ### Powerlevel10k Theme
 
@@ -162,17 +202,7 @@ p10k configure
 
 ## Recommended Additional Tools
 
-Consider installing these optional tools for enhanced productivity:
-
-- [fzf](https://github.com/junegunn/fzf) - Fuzzy finder
-- [bat](https://github.com/sharkdp/bat) - Better `cat` with syntax highlighting
-- [z](https://github.com/rupa/z) - Quick directory navigation
-- [diff-so-fancy](https://github.com/so-fancy/diff-so-fancy) - Better git diffs
-- [autojump](https://github.com/wting/autojump) - Smart directory jumping
-- [tmuxinator](https://github.com/tmuxinator/tmuxinator) - Tmux session manager
-- [navi](https://github.com/denisidoro/navi) - Interactive cheatsheet tool
-- [ripgrep](https://github.com/BurntSushi/ripgrep) - Fast grep alternative
-- [fd](https://github.com/sharkdp/fd) - Fast find alternative
+All recommended tools are now installed automatically via `bootstrap.sh`. No manual installation needed.
 
 ## Troubleshooting
 

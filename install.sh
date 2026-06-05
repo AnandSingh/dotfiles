@@ -50,9 +50,11 @@ EDITOR_PACKAGES=(
 )
 
 LINUX_WM_PACKAGES=(
+    "sway"
+    "kitty"
+    "waybar"
     "i3"
     "hyprland"
-    "waybar"
     "polybar"
     "picom"
     "xprofile"

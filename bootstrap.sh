@@ -70,7 +70,7 @@ install_packages() {
             log_info "Updating package cache..."
             sudo dnf update -y
 
-            log_info "Installing packages..."
+            log_info "Installing core packages..."
             sudo dnf install -y \
                 stow \
                 zsh \
@@ -80,9 +80,23 @@ install_packages() {
                 util-linux-user \
                 ncurses-devel \
                 libevent-devel \
-                htop \
                 fzf \
-                bat
+                bat \
+                ripgrep \
+                jq
+
+            log_info "Installing dev tools..."
+            sudo dnf install -y \
+                eza \
+                fd-find \
+                zoxide \
+                git-delta \
+                lazygit \
+                btop \
+                tldr \
+                dust \
+                duf \
+                glow
             ;;
 
         ubuntu)
@@ -160,6 +174,39 @@ install_vim_plug() {
     fi
 }
 
+# Install TPM (Tmux Plugin Manager)
+install_tpm() {
+    if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+        log_info "Installing TPM (Tmux Plugin Manager)..."
+        git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+        log_info "TPM installed! Run prefix+I in tmux to install plugins."
+    else
+        log_warn "TPM already installed, skipping..."
+    fi
+}
+
+# Setup passwordless sudo for safe commands
+setup_sudoers() {
+    local sudoers_file="/etc/sudoers.d/nopasswd-safe"
+    if [ ! -f "$sudoers_file" ]; then
+        log_info "Setting up passwordless sudo for safe commands..."
+        echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/dnf, /usr/bin/systemctl, /usr/bin/reboot, /usr/bin/poweroff, /usr/bin/mount, /usr/bin/umount, /usr/bin/dmesg, /usr/bin/journalctl, /usr/bin/nmap" \
+            | sudo tee "$sudoers_file" > /dev/null
+        sudo chmod 440 "$sudoers_file"
+        log_info "Sudoers configured!"
+    else
+        log_warn "Sudoers already configured, skipping..."
+    fi
+}
+
+# Initialize tldr cache
+init_tldr() {
+    if command -v tldr &>/dev/null; then
+        log_info "Updating tldr cache..."
+        tldr --update &>/dev/null &
+    fi
+}
+
 # Set Zsh as default shell
 set_default_shell() {
     if [ "$SHELL" != "$(which zsh)" ]; then
@@ -182,20 +229,30 @@ main() {
     install_packages
     echo
 
+    setup_sudoers
+    echo
+
     install_oh_my_zsh
     echo
 
     install_vim_plug
     echo
 
+    install_tpm
+    echo
+
     set_default_shell
     echo
+
+    init_tldr
 
     log_info "Bootstrap complete!"
     log_info "Next steps:"
     echo "  1. Run './install.sh' to symlink your dotfiles"
     echo "  2. Restart your terminal or run 'exec zsh'"
     echo "  3. Run 'p10k configure' to set up your prompt"
+    echo "  4. Open tmux and press prefix+I to install plugins"
+    echo "  5. Create ~/.zshrc.local for machine-specific config (CUDA, etc.)"
 }
 
 main "$@"
