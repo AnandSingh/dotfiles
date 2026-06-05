@@ -137,24 +137,50 @@ if command -v eza &>/dev/null; then
     alias ls='eza --icons'
     alias ll='eza -la --icons --git'
     alias lt='eza -T --icons --level=2'
+    alias la='eza -a --icons'
 else
     alias ls='ls --color=auto'
     alias ll='ls -la'
 fi
 
+# cat → bat
+if command -v bat &>/dev/null; then
+    alias cat='bat --paging=never'
+    alias catp='bat'
+fi
+
+# find → fd (don't shadow fd binary)
+alias ff='fd --type f'
+alias fdir='fd --type d'
+
+# grep → ripgrep
+alias rg='rg --smart-case'
+
 # Git shortcuts (beyond oh-my-zsh git plugin)
 alias glog='git log --oneline --graph --decorate -20'
 alias gd='git diff'
 alias gds='git diff --staged'
+alias lg='lazygit'
 
-# Quick find
-alias ff='find . -type f -name'
-alias fd='find . -type d -name'
+# Disk usage
+alias du='dust'
+alias df='duf'
 
 # System
-alias df='df -h'
 alias free='free -h'
 alias ports='ss -tulnp'
+alias top='btop'
+
+# ==================== Tool Integrations ====================
+
+# zoxide — smarter cd (type 'z dotfiles' from anywhere)
+eval "$(zoxide init zsh)"
+
+# fzf — fuzzy finder key bindings
+[ -f /usr/share/fzf/shell/key-bindings.zsh ] && source /usr/share/fzf/shell/key-bindings.zsh
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

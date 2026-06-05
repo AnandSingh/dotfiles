@@ -91,12 +91,18 @@ install_packages() {
                 fd-find \
                 zoxide \
                 git-delta \
-                lazygit \
                 btop \
                 tldr \
                 dust \
                 duf \
                 glow
+
+            # lazygit is not in Fedora repos, install from COPR
+            if ! command -v lazygit &>/dev/null; then
+                log_info "Installing lazygit from COPR..."
+                sudo dnf copr enable atim/lazygit -y
+                sudo dnf install -y lazygit
+            fi
             ;;
 
         ubuntu)
