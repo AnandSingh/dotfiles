@@ -79,8 +79,8 @@ exec swaymsg "workspace 7; exec $browser --new-window --app=https://chat.google.
 
 # ==================== Key Bindings — Apps ====================
 
-bindsym $mod+Return exec $term
-bindsym $mod+t exec $term
+bindsym $mod+Return exec swaymsg '[app_id="kitty"]' focus || exec $term
+bindsym $mod+t exec swaymsg '[app_id="kitty"]' focus || exec $term
 bindsym $mod+space exec $menu
 bindsym $mod+b exec $browser --new-window
 bindsym $mod+e exec $filemanager
