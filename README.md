@@ -51,95 +51,49 @@ This dotfiles repository uses [GNU Stow](https://www.gnu.org/software/stow/) for
 
 ## Quick Start
 
-### Option 1: One-Command Remote Install (Easiest)
-
-On a completely fresh machine, just run this single command:
+### Fresh PC — one command
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/AnandSingh/dotfiles/main/remote-install.sh)
 ```
 
-This will:
-1. Install git (if needed)
-2. Clone your dotfiles repository
-3. Install all dependencies
-4. Symlink your configurations
-5. Prompt you for installation options
-
-### Option 2: Manual Setup
-
-Clone this repository and run the bootstrap script:
+### Existing PC — pull updates
 
 ```bash
-git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
+cd ~/dotfiles && ./update.sh
+```
+
+### Manual setup
+
+```bash
+git clone git@github.com:AnandSingh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-./bootstrap.sh
+./bootstrap.sh    # install packages, dev tools, sudoers, oh-my-zsh, TPM
+./install.sh      # stow all configs
+source ~/.zshrc
 ```
 
-This will:
-1. Detect your OS (macOS, Fedora, or Ubuntu)
-2. Install required packages (stow, zsh, tmux, neovim, etc.)
-3. Install dev tools (eza, fd, zoxide, delta, lazygit, btop, etc.)
-4. Setup passwordless sudo for safe commands (dnf, systemctl, reboot, etc.)
-5. Install Oh My Zsh with plugins and powerlevel10k theme
-6. Install vim-plug for Neovim
-7. Install TPM for Tmux
-8. Set Zsh as your default shell
+### Scripts
 
-### Install Dotfiles
+| Script | Purpose |
+|--------|---------|
+| `remote-install.sh` | One-liner for brand new PC (curl + run) |
+| `bootstrap.sh` | Install all system packages, tools, shell plugins |
+| `install.sh` | Stow/restow/unstow dotfile symlinks |
+| `update.sh` | Pull + bootstrap + restow (for syncing changes) |
 
-After bootstrapping, install your dotfiles:
+See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed post-install steps and key bindings cheatsheet.
 
-```bash
-./install.sh
-```
-
-That's it! Restart your terminal and you're ready to go.
-
-## Advanced Usage
-
-### Install Specific Packages
+## Usage
 
 ```bash
-# Install only core tools (git, zsh, tmux)
-./install.sh core
-
-# Install only editors (vim, nvim)
-./install.sh editors
-
-# Install Linux window manager configs (Linux only)
-./install.sh linux-wm
-
-# Install everything
-./install.sh all
-```
-
-### Update Dotfiles
-
-After making changes to your dotfiles:
-
-```bash
-./install.sh restow
-```
-
-### Uninstall
-
-Remove all symlinks:
-
-```bash
-./install.sh uninstall
-```
-
-## Manual Installation
-
-If you prefer to install specific packages manually:
-
-```bash
-# Using stow to install individual packages
-cd ~/dotfiles
-stow zsh      # Install zsh configuration
-stow tmux     # Install tmux configuration
-stow nvim     # Install neovim configuration
+./install.sh              # install all
+./install.sh core         # just git, zsh, tmux
+./install.sh editors      # just vim, nvim
+./install.sh linux-wm     # sway, kitty, waybar, etc.
+./install.sh restow       # re-symlink after changes
+./install.sh uninstall    # remove all symlinks
+stow zsh                  # stow a single package
 ```
 
 ## Package Structure
@@ -168,92 +122,19 @@ dotfiles/
 
 ## Customization
 
-### Machine-Specific Configuration
-
-For machine-specific settings (CUDA paths, local env vars), use `~/.zshrc.local`:
-
-```bash
-# ~/.zshrc.local (not tracked in git)
-export PATH=/usr/local/cuda-12.8/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64:${LD_LIBRARY_PATH}
-```
-
-This file is sourced by `.zshrc` if it exists.
-
-### Passwordless Sudo
-
-Bootstrap configures passwordless sudo for safe commands:
-- `dnf` — package management
-- `systemctl` — service management
-- `reboot` / `poweroff` — system control
-- `mount` / `umount` — drives
-- `dmesg` / `journalctl` — logs
-- `nmap` — network scanning
-
-Config lives at `/etc/sudoers.d/nopasswd-safe`.
-
-### Powerlevel10k Theme
-
-On first run, configure your prompt:
-
-```bash
-p10k configure
-```
+- **Machine-specific config**: `~/.zshrc.local` (CUDA, local paths — not tracked)
+- **Sudoers**: `bootstrap.sh` sets up passwordless sudo for dnf, systemctl, reboot, mount, dmesg, journalctl, nmap
+- **Prompt theme**: Run `p10k configure`
 
 ## Recommended Additional Tools
 
 All recommended tools are now installed automatically via `bootstrap.sh`. No manual installation needed.
 
-## Troubleshooting
+## Platform Notes
 
-### Stow Conflicts
-
-If you get "existing target is not owned by stow" errors:
-
-```bash
-# Backup existing files
-mv ~/.zshrc ~/.zshrc.backup
-mv ~/.tmux.conf ~/.tmux.conf.backup
-
-# Then restow
-./install.sh restow
-```
-
-### Zsh Not Default Shell
-
-If zsh isn't your default shell after installation:
-
-```bash
-chsh -s $(which zsh)
-```
-
-Then log out and back in.
-
-### Neovim Plugins Not Installing
-
-Run vim-plug manually:
-
-```bash
-nvim +PlugInstall +qall
-```
-
-## Platform-Specific Notes
-
-### macOS
-- Homebrew is installed automatically if not present
-- Some Linux packages (window managers) are skipped
-
-### Fedora
-- Uses `dnf` package manager
-- Installs development tools and dependencies
-
-### Ubuntu
-- Uses `apt` package manager
-- `bat` is installed as `batcat`, automatically linked to `bat`
-
-## Contributing
-
-Feel free to fork this repository and customize it for your needs!
+- **Fedora** (primary): dnf, lazygit via COPR
+- **macOS**: Homebrew auto-installed, Linux WM packages skipped
+- **Ubuntu**: apt, `batcat` auto-linked to `bat`
 
 ## License
 
