@@ -86,6 +86,9 @@ bindsym $mod+b exec $browser --new-window
 bindsym $mod+e exec $filemanager
 bindsym $mod+c exec code-fb
 
+# Scratchpad terminal — quick floating terminal (toggle with $mod+grave)
+bindsym $mod+grave exec swaymsg '[app_id="scratchterm"]' scratchpad show || exec $term --class scratchterm -o shell=zsh
+
 # ==================== Key Bindings — Window ====================
 
 # Alt+Tab to cycle windows (familiar from GNOME/Windows)
@@ -214,6 +217,9 @@ for_window [class="Code"] focus
 for_window [class="code-fb"] focus
 for_window [app_id="thunar"] focus
 for_window [class="Google Chat"] focus
+
+# Scratchpad terminal — floating, centered, no tmux
+for_window [app_id="scratchterm"] floating enable, resize set 60 ppt 50 ppt, move position center, move to scratchpad, scratchpad show
 
 for_window [app_id="pavucontrol"] floating enable, resize set 800 600
 for_window [app_id="nm-connection-editor"] floating enable
