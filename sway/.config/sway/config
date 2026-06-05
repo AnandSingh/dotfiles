@@ -86,8 +86,8 @@ bindsym $mod+b exec $browser --new-window
 bindsym $mod+e exec $filemanager
 bindsym $mod+c exec code-fb
 
-# Scratchpad terminal — quick floating terminal (toggle with $mod+grave)
-bindsym $mod+grave exec swaymsg '[app_id="scratchterm"]' scratchpad show || exec $term --class scratchterm -o shell=zsh
+# Dropdown terminal — rolls down from top, toggle with $mod+grave
+bindsym $mod+grave exec swaymsg '[app_id="dropdown"]' scratchpad show || exec $term --class dropdown -o shell=zsh
 
 # ==================== Key Bindings — Window ====================
 
@@ -218,8 +218,14 @@ for_window [class="code-fb"] focus
 for_window [app_id="thunar"] focus
 for_window [class="Google Chat"] focus
 
-# Scratchpad terminal — floating, centered, no tmux
-for_window [app_id="scratchterm"] floating enable, resize set 60 ppt 50 ppt, move position center, move to scratchpad, scratchpad show
+# Dropdown terminal — full-width, anchored to top, quake-style
+for_window [app_id="dropdown"] {
+    floating enable
+    resize set 100 ppt 40 ppt
+    move position 0 0
+    move to scratchpad
+    scratchpad show
+}
 
 for_window [app_id="pavucontrol"] floating enable, resize set 800 600
 for_window [app_id="nm-connection-editor"] floating enable
