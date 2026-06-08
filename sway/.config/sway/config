@@ -56,6 +56,9 @@ exec_always --no-startup-id {
 }
 
 exec {
+    /usr/libexec/xdg-desktop-portal-wlr
+    /usr/libexec/xdg-desktop-portal-gtk
+    /usr/libexec/xdg-desktop-portal
     waybar
     swaync
     nm-applet --indicator
