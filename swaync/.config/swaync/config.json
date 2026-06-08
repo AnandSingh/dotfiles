@@ -1,6 +1,7 @@
 {
-  "positionX": "right",
+  "positionX": "center",
   "positionY": "top",
+  "notification-window-width": 450,
   "layer": "overlay",
   "control-center-layer": "top",
   "layer-shell": true,
