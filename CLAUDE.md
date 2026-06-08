@@ -93,4 +93,7 @@ All wired into zsh via aliases in `.zshrc`:
 | `remote-install.sh` | Brand new PC — curl one-liner |
 | `bootstrap.sh` | Fresh clone — install all system deps |
 | `install.sh` | Stow/restow/unstow configs |
-| `update.sh` | Existing PC — pull + bootstrap + restow |
+| `fixmylinux` | Doctor/repair/sync this machine. `fixmylinux doctor` (read-only health check), `fixmylinux fix` (restow + reseed), bare `fixmylinux` (full sync). Stowed to `~/.local/bin` via the `bin` package. |
+| `update.sh` | Thin shim → `fixmylinux` (kept for compatibility) |
+
+`fixmylinux` also has a Claude skill at `.claude/skills/fixmylinux/SKILL.md` (tracked; the rest of `.claude/` is git-ignored) — say "fix my linux" / `/fixmylinux` and Claude runs the doctor, explains failures, and confirms before any mutating command.
