@@ -4,7 +4,10 @@
 *.swp
 *.swo
 *~
-.claude/
+# Ignore Claude's local state, but track repo-provided skills so they sync.
+.claude/*
+!.claude/skills/
+!.claude/skills/**
 *.bak.*
 
 # Per-machine Sway overrides (monitors, inputs, machine-only apps).

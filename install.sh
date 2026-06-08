@@ -43,6 +43,7 @@ CORE_PACKAGES=(
     "zsh"
     "tmux"
     "kitty"
+    "bin"
 )
 
 EDITOR_PACKAGES=(

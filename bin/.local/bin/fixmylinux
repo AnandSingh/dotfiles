@@ -1,0 +1,328 @@
+#!/usr/bin/env bash
+#
+# fixmylinux — dotfiles doctor / updater / repairer for this machine.
+#
+#   fixmylinux            Full sync: stash, pull, bootstrap, restow, reseed, verify.
+#   fixmylinux update     Alias for the full sync above.
+#   fixmylinux doctor     Read-only health report. Changes nothing. Exit 1 on any FAIL.
+#   fixmylinux fix        Repair configs (restow + reseed) without pulling. Then doctor.
+#   fixmylinux --help     This help.
+#
+# The script lives in the dotfiles repo and is stowed to ~/.local/bin. It locates
+# the repo through its own (possibly symlinked) path, so it works from anywhere.
+
+set -uo pipefail
+
+# ---------------------------------------------------------------------------
+# Locate the dotfiles repo (resolve through the stow symlink).
+# ---------------------------------------------------------------------------
+resolve_repo() {
+    local src="${BASH_SOURCE[0]}"
+    # Follow symlinks to the real file inside the repo.
+    while [ -L "$src" ]; do
+        local target
+        target="$(readlink "$src")"
+        case "$target" in
+            /*) src="$target" ;;
+            *)  src="$(cd "$(dirname "$src")" && cd "$(dirname "$target")" && pwd)/$(basename "$target")" ;;
+        esac
+    done
+    # src = <repo>/bin/.local/bin/fixmylinux  ->  up three dirs = <repo>
+    (cd "$(dirname "$src")/../../.." && pwd)
+}
+
+DOTFILES_DIR="${DOTFILES_DIR:-$(resolve_repo)}"
+
+# ---------------------------------------------------------------------------
+# Output helpers.
+# ---------------------------------------------------------------------------
+if [ -t 1 ]; then
+    RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
+    BLUE=$'\033[0;34m'; BOLD=$'\033[1m'; NC=$'\033[0m'
+else
+    RED=''; GREEN=''; YELLOW=''; BLUE=''; BOLD=''; NC=''
+fi
+
+PASS=0; WARN=0; FAIL=0
+step() { printf '\n%s==>%s %s\n' "$BLUE" "$NC" "$1"; }
+ok()   { printf '  %s✓%s %s\n' "$GREEN" "$NC" "$1"; PASS=$((PASS+1)); }
+warn() { printf '  %s⚠%s %s\n' "$YELLOW" "$NC" "$1"; WARN=$((WARN+1)); }
+bad()  { printf '  %s✗%s %s\n' "$RED" "$NC" "$1"; FAIL=$((FAIL+1)); }
+info() { printf '  %s·%s %s\n' "$BLUE" "$NC" "$1"; }
+die()  { printf '%sError:%s %s\n' "$RED" "$NC" "$1" >&2; exit 1; }
+
+# ---------------------------------------------------------------------------
+# Machine facts.
+# ---------------------------------------------------------------------------
+detect_os() {
+    if [ "$(uname -s)" = "Darwin" ]; then OS="macos"; return; fi
+    if [ -f /etc/os-release ]; then
+        # shellcheck disable=SC1091
+        . /etc/os-release
+        case "$ID" in
+            fedora) OS="fedora" ;;
+            ubuntu|debian) OS="ubuntu" ;;
+            *) OS="${ID:-linux}" ;;
+        esac
+    else
+        OS="unknown"
+    fi
+}
+
+# Dotfiles whose symlink we expect on a working machine.
+# Format: "<target under $HOME>"
+EXPECTED_LINKS=(
+    ".zshrc"
+    ".tmux.conf"
+    ".gitconfig"
+    ".config/sway/config"
+    ".config/kitty/kitty.conf"
+)
+
+# CLAUDE.md dev toolset. Some have different binary names on Debian/Ubuntu.
+# Format: "display:bin1[ bin2 ...]"  — first found wins.
+DEV_TOOLS=(
+    "eza:eza"
+    "fd:fd fdfind"
+    "zoxide:zoxide"
+    "delta:delta"
+    "lazygit:lazygit"
+    "fzf:fzf"
+    "ripgrep:rg"
+    "bat:bat batcat"
+    "btop:btop"
+    "dust:dust"
+    "duf:duf"
+    "glow:glow"
+    "jq:jq"
+)
+
+# ===========================================================================
+# DOCTOR — read-only checks.
+# ===========================================================================
+check_repo() {
+    step "Dotfiles repo"
+    [ -d "$DOTFILES_DIR/.git" ] || { bad "no git repo at $DOTFILES_DIR"; return; }
+    info "repo: $DOTFILES_DIR"
+    local branch; branch="$(git -C "$DOTFILES_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    info "branch: ${branch:-?}"
+
+    if git -C "$DOTFILES_DIR" diff-index --quiet HEAD -- 2>/dev/null; then
+        ok "working tree clean"
+    else
+        warn "uncommitted changes (run 'git status'); 'fixmylinux' stashes them before pull"
+    fi
+
+    # Compare against the cached remote ref (no network — run 'fixmylinux' to refresh).
+    local upstream; upstream="$(git -C "$DOTFILES_DIR" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)"
+    if [ -n "$upstream" ]; then
+        local counts behind ahead
+        counts="$(git -C "$DOTFILES_DIR" rev-list --left-right --count "HEAD...$upstream" 2>/dev/null)"
+        ahead="${counts%%[[:space:]]*}"; behind="${counts##*[[:space:]]}"
+        [ "${ahead:-0}" -gt 0 ] && info "$ahead commit(s) ahead of $upstream (unpushed)"
+        if [ "${behind:-0}" -gt 0 ]; then
+            warn "$behind commit(s) behind $upstream (cached) — run 'fixmylinux' to pull"
+        else
+            ok "up to date with $upstream (cached)"
+        fi
+    else
+        warn "no upstream tracking branch configured"
+    fi
+}
+
+check_symlinks() {
+    step "Stow symlinks"
+    local t real
+    for t in "${EXPECTED_LINKS[@]}"; do
+        local path="$HOME/$t"
+        if [ -L "$path" ]; then
+            if [ -e "$path" ]; then
+                real="$(readlink -f "$path")"
+                case "$real" in
+                    "$DOTFILES_DIR"/*) ok "$t -> repo" ;;
+                    *) warn "$t is a symlink but not into the dotfiles repo ($real)" ;;
+                esac
+            else
+                bad "$t is a DANGLING symlink — run 'fixmylinux fix'"
+            fi
+        elif [ -e "$path" ]; then
+            warn "$t exists but is a real file, not a stow symlink"
+        else
+            warn "$t missing — package not stowed? run 'fixmylinux fix'"
+        fi
+    done
+}
+
+check_configs() {
+    step "Config validity"
+
+    # zsh syntax
+    if command -v zsh >/dev/null 2>&1 && [ -f "$HOME/.zshrc" ]; then
+        if zsh -n "$HOME/.zshrc" 2>/tmp/fml_zsh.$$; then ok "~/.zshrc parses"
+        else bad "~/.zshrc syntax error: $(head -1 /tmp/fml_zsh.$$)"; fi
+        rm -f /tmp/fml_zsh.$$
+    else
+        info "zsh or ~/.zshrc absent — skipping"
+    fi
+
+    # sway config (filter the harmless Nvidia/GPU launch warnings)
+    if command -v sway >/dev/null 2>&1 && [ -e "$HOME/.config/sway/config" ]; then
+        local errs
+        errs="$(sway -C --unsupported-gpu 2>&1 | grep -iE 'error|invalid|expected|unknown' | grep -viE 'nvidia|unsupported.gpu|gpu' || true)"
+        if [ -z "$errs" ]; then ok "sway config parses"
+        else bad "sway config error: $(printf '%s' "$errs" | head -1)"; fi
+    else
+        info "sway or its config absent — skipping"
+    fi
+
+    # tmux config (load it into a throwaway server, then kill it)
+    if command -v tmux >/dev/null 2>&1 && [ -f "$HOME/.tmux.conf" ]; then
+        local out
+        out="$(tmux -L fml_check_$$ -f "$HOME/.tmux.conf" start-server 2>&1)"; local rc=$?
+        tmux -L fml_check_$$ kill-server 2>/dev/null
+        if [ $rc -eq 0 ] && ! printf '%s' "$out" | grep -qiE 'error|unknown|usage'; then
+            ok "~/.tmux.conf loads"
+        else
+            warn "~/.tmux.conf reported: $(printf '%s' "$out" | head -1)"
+        fi
+    else
+        info "tmux or ~/.tmux.conf absent — skipping"
+    fi
+
+    # git config
+    if [ -f "$HOME/.gitconfig" ]; then
+        if git config --list >/dev/null 2>&1; then ok "git config parses"
+        else bad "git config parse error"; fi
+    fi
+}
+
+check_tools() {
+    step "Dev tools (CLAUDE.md)"
+    local missing="" entry name bins b found
+    for entry in "${DEV_TOOLS[@]}"; do
+        name="${entry%%:*}"; bins="${entry#*:}"; found=""
+        for b in $bins; do
+            if command -v "$b" >/dev/null 2>&1; then found="$b"; break; fi
+        done
+        [ -n "$found" ] || missing="$missing $name"
+    done
+    if [ -z "$missing" ]; then
+        ok "all ${#DEV_TOOLS[@]} dev tools present"
+    else
+        warn "missing:$missing — run 'fixmylinux' (bootstrap installs them)"
+    fi
+}
+
+check_machine() {
+    step "Machine wiring ($OS)"
+    if [ -f "$HOME/.zshrc.local" ]; then ok "~/.zshrc.local present"
+    else warn "~/.zshrc.local missing — machine-specific shell config not set"; fi
+
+    if command -v sway >/dev/null 2>&1; then
+        if [ -f "$HOME/.config/sway/config.d/local.conf" ]; then
+            ok "sway config.d/local.conf seeded"
+        else
+            warn "sway local.conf not seeded — run 'fixmylinux fix'"
+        fi
+    fi
+}
+
+doctor() {
+    printf '%s%sfixmylinux doctor%s — %s\n' "$BOLD" "$BLUE" "$NC" "$(hostname) / $OS / $(uname -r)"
+    check_repo
+    check_symlinks
+    check_configs
+    check_tools
+    check_machine
+    printf '\n%s%s──────── %d passed, %d warnings, %d failed ────────%s\n' \
+        "$BOLD" "$BLUE" "$PASS" "$WARN" "$FAIL" "$NC"
+    if [ "$FAIL" -gt 0 ]; then
+        printf "%sFAIL%s — run '%sfixmylinux fix%s' to repair, or '%sfixmylinux%s' for a full sync.\n" \
+            "$RED" "$NC" "$BOLD" "$NC" "$BOLD" "$NC"
+        return 1
+    fi
+    [ "$WARN" -gt 0 ] && printf "%sOK with warnings.%s\n" "$YELLOW" "$NC"
+    return 0
+}
+
+# ===========================================================================
+# FIX — repair configs (no git pull).
+# ===========================================================================
+reseed_sway() {
+    command -v sway >/dev/null 2>&1 || return 0
+    local conf_dir="$DOTFILES_DIR/sway/.config/sway/config.d"
+    local examples="$DOTFILES_DIR/sway/.config/sway/examples"
+    local target="$conf_dir/local.conf"
+    [ -d "$examples" ] || return 0
+    [ -f "$target" ] && { info "sway local.conf already present"; return 0; }
+    local template
+    case "$OS" in
+        fedora) template="$examples/local.fedora-desktop.conf" ;;
+        ubuntu) template="$examples/local.ubuntu-laptop.conf" ;;
+        *)      template="$examples/local.conf.example" ;;
+    esac
+    [ -f "$template" ] || template="$examples/local.conf.example"
+    mkdir -p "$conf_dir"
+    cp "$template" "$target"
+    ok "seeded sway local.conf from $(basename "$template")"
+}
+
+do_fix() {
+    step "Repairing configs (restow + reseed)"
+    ( cd "$DOTFILES_DIR" && ./install.sh restow ) || die "restow failed"
+    reseed_sway
+    # Re-stow sway so a freshly-seeded local.conf gets linked.
+    ( cd "$DOTFILES_DIR" && stow -R -t "$HOME" sway 2>/dev/null ) || true
+    printf '\n%sRepair done. Verifying...%s\n' "$GREEN" "$NC"
+    PASS=0; WARN=0; FAIL=0
+    doctor
+}
+
+# ===========================================================================
+# FULL — stash, pull, bootstrap, restow, reseed, verify.
+# ===========================================================================
+do_full() {
+    cd "$DOTFILES_DIR" || die "cannot cd to $DOTFILES_DIR"
+    local stashed=0
+    step "Syncing dotfiles from origin"
+    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+        warn "uncommitted changes — stashing"
+        git stash push -m "fixmylinux autostash" && stashed=1
+    fi
+    git pull --rebase origin "$(git rev-parse --abbrev-ref HEAD)" || die "git pull failed — resolve manually"
+    if [ "$stashed" -eq 1 ]; then
+        git stash pop || warn "stash pop had conflicts — resolve manually"
+    fi
+    ok "repo up to date"
+
+    step "Installing packages / tools (bootstrap)"
+    ./bootstrap.sh || warn "bootstrap reported issues (continuing)"
+
+    step "Restowing configs"
+    ./install.sh restow || die "restow failed"
+    reseed_sway
+
+    printf '\n%sSync done. Verifying...%s\n' "$GREEN" "$NC"
+    PASS=0; WARN=0; FAIL=0
+    doctor
+}
+
+usage() {
+    # Print the leading comment block (everything after the shebang up to the
+    # first non-comment line), with the leading "# " stripped.
+    awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"
+}
+
+# ---------------------------------------------------------------------------
+main() {
+    detect_os
+    case "${1:-full}" in
+        doctor|check|status) doctor ;;
+        fix|repair)          do_fix ;;
+        ""|full|update|sync) do_full ;;
+        -h|--help|help)      usage ;;
+        *) die "unknown command '$1' — try 'fixmylinux --help'" ;;
+    esac
+}
+
+main "$@"
