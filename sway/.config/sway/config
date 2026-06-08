@@ -57,7 +57,7 @@ exec_always --no-startup-id {
 
 exec {
     waybar
-    # swaync (install SwayNotificationCenter if desired)
+    swaync
     nm-applet --indicator
     wl-paste --type text --watch cliphist store
     wl-paste --type image --watch cliphist store

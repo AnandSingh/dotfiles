@@ -1,0 +1,123 @@
+/* SwayNC — Catppuccin Mocha theme */
+
+/* Notification popup (toast) */
+.notification-row {
+    outline: none;
+}
+
+.notification {
+    border-radius: 8px;
+    margin: 6px;
+    padding: 0;
+    border: 2px solid #89b4fa;
+    background: #1e1e2e;
+}
+
+.notification-content {
+    padding: 8px;
+    border-radius: 8px;
+    background: #1e1e2e;
+    color: #cdd6f4;
+}
+
+.notification-default-action {
+    border-radius: 8px;
+}
+
+.summary {
+    color: #cdd6f4;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.body {
+    color: #a6adc8;
+    font-size: 13px;
+}
+
+.time {
+    color: #6c7086;
+    font-size: 11px;
+}
+
+.close-button {
+    background: #45475a;
+    color: #cdd6f4;
+    border-radius: 50%;
+    min-width: 24px;
+    min-height: 24px;
+    margin: 4px;
+}
+
+.close-button:hover {
+    background: #f38ba8;
+}
+
+.image {
+    margin: 4px;
+    border-radius: 4px;
+}
+
+/* Critical notifications */
+.notification.critical {
+    border-color: #f38ba8;
+}
+
+/* Control center panel */
+.control-center {
+    background: #1e1e2e;
+    border: 2px solid #45475a;
+    border-radius: 12px;
+    padding: 8px;
+    color: #cdd6f4;
+}
+
+.control-center .notification {
+    border: 1px solid #313244;
+}
+
+/* Title */
+.widget-title {
+    color: #cdd6f4;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 8px;
+}
+
+.widget-title button {
+    background: #45475a;
+    color: #cdd6f4;
+    border-radius: 6px;
+    padding: 4px 12px;
+    border: none;
+}
+
+.widget-title button:hover {
+    background: #f38ba8;
+}
+
+/* DND toggle */
+.widget-dnd {
+    margin: 4px 8px;
+    padding: 4px;
+    color: #cdd6f4;
+}
+
+.widget-dnd > switch {
+    border-radius: 12px;
+    background: #45475a;
+}
+
+.widget-dnd > switch:checked {
+    background: #89b4fa;
+}
+
+.widget-dnd > switch slider {
+    border-radius: 50%;
+    background: #cdd6f4;
+}
+
+/* Floating notifications (popup toast) */
+.floating-notifications {
+    background: transparent;
+}
