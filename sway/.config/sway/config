@@ -247,3 +247,8 @@ xwayland enable
 # ==================== Include ====================
 
 include /etc/sway/config.d/*
+
+# Per-machine overrides (monitors, inputs, machine-only apps). Git-ignored;
+# seeded from examples/ by bootstrap.sh per OS. Last include wins, so these
+# override the defaults above.
+include ~/.config/sway/config.d/*.conf
