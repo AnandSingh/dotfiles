@@ -1,242 +1,180 @@
 # Setup Guide
 
-This guide explains how to use your improved dotfiles on a new machine.
+## Fresh PC Setup (from scratch)
 
-## What Changed?
-
-Your dotfiles have been reorganized for easier setup across platforms:
-
-- **Cross-platform support**: Now works on macOS, Fedora, and Ubuntu
-- **GNU Stow integration**: Clean symlink management
-- **Modular packages**: Install only what you need
-- **Automated setup**: One-command installation
-
-## File Structure
-
-```
-dotfiles/
-├── bootstrap.sh          # Install dependencies (run first)
-├── install.sh            # Install dotfiles with stow
-├── quickstart.sh         # All-in-one setup script
-├── README.md             # Full documentation
-├── git/                  # Git configuration
-├── zsh/                  # Zsh configuration
-├── tmux/                 # Tmux configuration
-├── vim/                  # Vim configuration
-├── nvim/                 # Neovim configuration
-└── [linux-wm packages]   # i3, hyprland, waybar, etc.
-```
-
-## Setup on New Machine
-
-### Option 1: Fully Automated (Recommended)
+On a brand new Fedora machine, run this single command:
 
 ```bash
-# Clone your dotfiles
-git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
+bash <(curl -fsSL https://raw.githubusercontent.com/AnandSingh/dotfiles/main/remote-install.sh)
+```
+
+Or manually:
+
+```bash
+git clone git@github.com:AnandSingh/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-
-# Run the quickstart script (does everything)
-./quickstart.sh
+./bootstrap.sh   # install packages, dev tools, sudoers, oh-my-zsh, TPM
+./install.sh      # stow all configs
 ```
 
-### Option 2: Step-by-Step
+### After install
 
 ```bash
-# Clone your dotfiles
-git clone https://github.com/AnandSingh/dotfiles.git ~/dotfiles
-cd ~/dotfiles
+# Reload shell
+exec zsh
 
-# Step 1: Install dependencies
-./bootstrap.sh
+# Configure prompt theme
+p10k configure
 
-# Step 2: Install safe default dotfiles (core/editor)
-./install.sh
+# Open tmux and install plugins
+tmux
+# Press Ctrl+a, then I (capital i) to install tmux plugins
+
+# Create machine-specific config (if needed)
+nvim ~/.zshrc.local
 ```
 
-### Option 3: Selective Installation
+Example `~/.zshrc.local` for a CUDA machine:
 
 ```bash
-# After running bootstrap.sh, install only what you need:
-
-./install.sh core        # Just git, zsh, tmux, kitty
-./install.sh editors     # Just vim and nvim
-./install.sh linux-wm    # Just window managers (Linux only)
-./install.sh all         # Everything, including window managers
+export PATH=/usr/local/cuda-12.8/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64:${LD_LIBRARY_PATH}
 ```
 
-## Platform-Specific Instructions
+---
 
-### macOS
+## Update Existing PC
+
+When you've made changes on another machine and want to sync:
 
 ```bash
 cd ~/dotfiles
-./bootstrap.sh  # Installs Homebrew if needed
-./install.sh
+./update.sh
 ```
 
-### Fedora
+This pulls latest changes, installs any new packages, and re-stows configs.
 
-```bash
-cd ~/dotfiles
-./bootstrap.sh  # Uses dnf
-./install.sh
-```
+---
 
-### Ubuntu
+## What Gets Installed
 
-```bash
-cd ~/dotfiles
-./bootstrap.sh  # Uses apt
-./install.sh
-```
+### Packages (via bootstrap.sh)
 
-## Updating Your Dotfiles
+| Category | Tools |
+|----------|-------|
+| **Core** | stow, zsh, tmux, neovim, git |
+| **Search** | fzf, ripgrep, fd-find |
+| **Viewing** | bat, eza, glow, delta |
+| **Navigation** | zoxide |
+| **Git** | lazygit (via COPR) |
+| **System** | btop, dust, duf |
+| **Docs** | tldr |
+| **JSON** | jq |
 
-After making changes to your configs:
+### Configs (via install.sh)
 
-```bash
-cd ~/dotfiles
-git pull              # Get latest changes
-./install.sh restow   # Update symlinks
-```
+| Package | What it configures |
+|---------|-------------------|
+| **zsh** | Shell aliases, dev shortcuts, tool integrations, p10k theme |
+| **git** | Delta pager, side-by-side diffs, aliases |
+| **tmux** | Prefix `Ctrl+a`, vim nav, auto-save/restore, plugins |
+| **kitty** | Catppuccin theme, auto-attach tmux, clipboard |
+| **sway** | Tiling WM, dropdown terminal, tabbed Chrome, auto-focus |
+| **waybar** | Status bar |
+| **nvim** | Neovim config |
 
-## Common Tasks
+### Sudoers (passwordless)
 
-### Add a new config file
+These commands won't need a password:
+- `dnf` — package management
+- `systemctl` — services
+- `reboot` / `poweroff`
+- `mount` / `umount`
+- `dmesg` / `journalctl`
+- `nmap`
 
-```bash
-# 1. Add file to appropriate package
-echo "alias ll='ls -la'" >> ~/dotfiles/zsh/.zshrc
+---
 
-# 2. Restow the package
-cd ~/dotfiles
-stow -R zsh
+## Key Bindings Cheatsheet
 
-# 3. Commit changes
-git add .
-git commit -m "Add ll alias to zsh"
-git push
-```
+### Sway
 
-### Create a new package
+| Binding | Action |
+|---------|--------|
+| `Super+Return` | Focus existing terminal (or open new) |
+| `` Super+` `` | Toggle dropdown terminal |
+| `Super+h/j/k/l` | Focus left/down/up/right |
+| `Super+Shift+h/j/k/l` | Move window |
+| `Super+1-9` | Switch workspace |
+| `Super+Shift+r` | Reload sway config |
+| `Super+b` | Open browser |
+| `Super+e` | Open file manager |
+| `Super+w` | Toggle tabbed layout |
 
-```bash
-cd ~/dotfiles
+### Tmux (prefix = Ctrl+a)
 
-# 1. Create package directory
-mkdir -p myapp
+| Binding | Action |
+|---------|--------|
+| `Ctrl+a, \|` | Split horizontal |
+| `Ctrl+a, -` | Split vertical |
+| `Ctrl+a, h/j/k/l` | Navigate panes |
+| `Ctrl+a, c` | New window |
+| `Shift+Left/Right` | Switch window |
+| `Ctrl+a, Ctrl+s` | Save session |
+| `Ctrl+a, Ctrl+r` | Restore session |
 
-# 2. Add config file
-echo "config=value" > myapp/.myapprc
+### Shell Aliases
 
-# 3. Stow it
-stow myapp
+| Alias | Command |
+|-------|---------|
+| `ll` | `eza -la --icons --git` |
+| `lt` | `eza -T --icons --level=2` |
+| `cat` | `bat --paging=never` |
+| `lg` | `lazygit` |
+| `top` | `btop` |
+| `z <dir>` | `zoxide` — smart cd |
+| `dots` | `cd ~/dotfiles` |
+| `zrc` | Edit zshrc |
+| `src` | Reload zshrc |
+| `glog` | Pretty git log |
+| `gd` | Git diff (with delta) |
+| `Ctrl+t` | fzf file search |
+| `Ctrl+r` | fzf history search |
 
-# 4. Update install.sh to include it (optional)
-```
-
-### Remove/Unstow a package
-
-```bash
-cd ~/dotfiles
-stow -D zsh  # Removes symlinks for zsh package
-```
+---
 
 ## Troubleshooting
 
-### "Stow conflicts" error
-
-If stow reports conflicts with existing files:
+### Stow conflicts
 
 ```bash
-# Backup existing files
-mv ~/.zshrc ~/.zshrc.backup
-mv ~/.tmux.conf ~/.tmux.conf.backup
-
-# Try again
-./install.sh restow
-```
-
-### Zsh plugins not loading
-
-Make sure Oh My Zsh is installed:
-
-```bash
-ls -la ~/.oh-my-zsh
-# If not found, run:
-./bootstrap.sh
-```
-
-### Neovim config not found
-
-```bash
-# Check symlink
-ls -la ~/.config/nvim
-
-# If broken, restow
 cd ~/dotfiles
-stow -R nvim
+stow --adopt zsh    # adopts existing file into dotfiles
+git diff            # review what changed
+git checkout -- .   # revert if the dotfiles version was better
+stow -R zsh         # re-stow
 ```
 
-## Tips
-
-1. **Keep it in sync**: Commit and push changes regularly
-2. **Test on VM**: Try your setup on a fresh VM first
-3. **Document changes**: Add comments to your configs
-4. **Use private file**: Put sensitive configs in `~/.bashrc_private`
-
-## What Gets Installed?
-
-### bootstrap.sh installs:
-- GNU Stow (symlink manager)
-- Zsh (shell)
-- Tmux (terminal multiplexer)
-- Neovim (editor)
-- Git (version control)
-- Oh My Zsh + plugins
-- Powerlevel10k theme
-- fzf, bat (optional tools)
-
-### install.sh creates symlinks for:
-- All your configuration files
-- From ~/dotfiles/* to your home directory
-
-## Next Steps After Installation
-
-1. Restart your terminal or run: `exec zsh`
-2. Configure Powerlevel10k: `p10k configure`
-3. Check neovim plugins: `nvim +PlugInstall +qall`
-4. Customize as needed!
-
-## Quick Reference
+### Tools not found after install
 
 ```bash
-# Full setup on new machine
-./quickstart.sh
-
-# Install everything
-./install.sh
-
-# Install specific parts
-./install.sh core
-./install.sh editors
-./install.sh linux-wm
-
-# Update after changes
-./install.sh restow
-
-# Remove all symlinks
-./install.sh uninstall
-
-# Manual stow
-stow package_name
-stow -R package_name  # Restow
-stow -D package_name  # Unstow
+source ~/.zshrc
 ```
 
-## Need Help?
+### Tmux plugins not loading
 
-- See [README.md](README.md) for detailed documentation
-- Check [GNU Stow manual](https://www.gnu.org/software/stow/manual/stow.html)
-- Review individual config files for tool-specific settings
+Inside tmux: `Ctrl+a`, then `Shift+I` to install plugins.
+
+### Lazygit not in dnf
+
+```bash
+sudo dnf copr enable atim/lazygit -y
+sudo dnf install -y lazygit
+```
+
+### Delta theme not found
+
+```bash
+delta --list-syntax-themes    # list available themes
+# Edit ~/.gitconfig and change syntax-theme if needed
+```

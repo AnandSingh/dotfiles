@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+# Chrome profile picker for Sway.
+# Lists Google Chrome profiles by display name, launches the chosen one.
+# Tabbed ws2:web layout stacks every profile window as a tab (see sway config).
+set -eu
+
+state="$HOME/.config/google-chrome/Local State"
+notice() { notify-send "Chrome" "$1" 2>/dev/null || true; }
+
+command -v jq >/dev/null 2>&1 || { notice "jq not installed"; exit 1; }
+[ -f "$state" ] || { notice "No Chrome profiles found"; exit 1; }
+
+# Pick a dmenu-style launcher matching wm-dev-menu's preference order.
+menu() {
+  if command -v fuzzel >/dev/null 2>&1; then fuzzel --dmenu --prompt "chrome> "
+  elif command -v wofi >/dev/null 2>&1; then wofi --dmenu --prompt "chrome"
+  elif command -v rofi >/dev/null 2>&1; then rofi -dmenu -p chrome
+  elif command -v dmenu >/dev/null 2>&1; then dmenu -p chrome
+  else notice "No launcher (fuzzel/wofi/rofi/dmenu)"; exit 1
+  fi
+}
+
+# Display names -> menu. Map selection back to its profile directory.
+sel=$(jq -r '.profile.info_cache | to_entries[] | .value.name' "$state" | sort | menu) || exit 0
+[ -n "${sel:-}" ] || exit 0
+
+dir=$(jq -r --arg n "$sel" \
+  '.profile.info_cache | to_entries[] | select(.value.name==$n) | .key' "$state" | head -1)
+[ -n "${dir:-}" ] || { notice "Profile not found: $sel"; exit 1; }
+
+# Default app_id stays "google-chrome" so the ws2 assign rule routes it to the tab stack.
+exec google-chrome-stable --profile-directory="$dir" "$@"

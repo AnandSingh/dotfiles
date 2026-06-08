@@ -70,7 +70,7 @@ install_packages() {
             log_info "Updating package cache..."
             sudo dnf update -y
 
-            log_info "Installing packages..."
+            log_info "Installing core packages..."
             sudo dnf install -y \
                 stow \
                 zsh \
@@ -80,9 +80,29 @@ install_packages() {
                 util-linux-user \
                 ncurses-devel \
                 libevent-devel \
-                htop \
                 fzf \
-                bat
+                bat \
+                ripgrep \
+                jq
+
+            log_info "Installing dev tools..."
+            sudo dnf install -y \
+                eza \
+                fd-find \
+                zoxide \
+                git-delta \
+                btop \
+                tldr \
+                dust \
+                duf \
+                glow
+
+            # lazygit is not in Fedora repos, install from COPR
+            if ! command -v lazygit &>/dev/null; then
+                log_info "Installing lazygit from COPR..."
+                sudo dnf copr enable atim/lazygit -y
+                sudo dnf install -y lazygit
+            fi
             ;;
 
         ubuntu)
@@ -100,17 +120,7 @@ install_packages() {
                 wget \
                 build-essential \
                 htop \
-                fzf \
-                ripgrep \
-                fd-find \
-                bat \
-                jq \
-                unzip \
-                ca-certificates \
-                wl-clipboard \
-                xclip \
-                bc \
-                kitty
+                fzf
 
             # bat is called batcat on Ubuntu
             if ! command -v bat &> /dev/null && command -v batcat &> /dev/null; then
@@ -128,30 +138,32 @@ install_oh_my_zsh() {
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
         log_info "Installing Oh My Zsh..."
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+        # Install plugins
+        log_info "Installing zsh plugins..."
+
+        # zsh-autosuggestions
+        if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]; then
+            git clone https://github.com/zsh-users/zsh-autosuggestions \
+                ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+        fi
+
+        # zsh-syntax-highlighting
+        if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ]; then
+            git clone https://github.com/zsh-users/zsh-syntax-highlighting \
+                ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+        fi
+
+        # powerlevel10k theme
+        if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" ]; then
+            git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+                ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+        fi
+
+        log_info "Oh My Zsh and plugins installed!"
     else
         log_warn "Oh My Zsh already installed, skipping..."
     fi
-
-    # Install/update expected plugins even when Oh My Zsh already exists.
-    local zsh_custom="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-    log_info "Installing zsh plugins..."
-
-    if [ ! -d "$zsh_custom/plugins/zsh-autosuggestions" ]; then
-        git clone https://github.com/zsh-users/zsh-autosuggestions \
-            "$zsh_custom/plugins/zsh-autosuggestions"
-    fi
-
-    if [ ! -d "$zsh_custom/plugins/zsh-syntax-highlighting" ]; then
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting \
-            "$zsh_custom/plugins/zsh-syntax-highlighting"
-    fi
-
-    if [ ! -d "$zsh_custom/themes/powerlevel10k" ]; then
-        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
-            "$zsh_custom/themes/powerlevel10k"
-    fi
-
-    log_info "Oh My Zsh plugins are ready!"
 }
 
 # Install vim-plug for Neovim
@@ -168,68 +180,48 @@ install_vim_plug() {
     fi
 }
 
-# Set Zsh as default shell
-set_default_shell() {
-    local zsh_path
-    local login_shell
-
-    zsh_path="$(command -v zsh)"
-    if command -v getent >/dev/null 2>&1; then
-        login_shell="$(getent passwd "$USER" | cut -d: -f7)"
+# Install TPM (Tmux Plugin Manager)
+install_tpm() {
+    if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+        log_info "Installing TPM (Tmux Plugin Manager)..."
+        git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+        log_info "TPM installed! Run prefix+I in tmux to install plugins."
     else
-        login_shell="$SHELL"
-    fi
-
-    if [ "$(basename "$login_shell")" != "zsh" ]; then
-        log_info "Setting Zsh as default shell..."
-        chsh -s "$zsh_path"
-        log_info "Zsh set as default shell. Please log out and back in for changes to take effect."
-    else
-        log_info "Zsh is already the default shell: $login_shell"
-    fi
-
-    if command -v getent >/dev/null 2>&1; then
-        login_shell="$(getent passwd "$USER" | cut -d: -f7)"
-        if [ "$(basename "$login_shell")" != "zsh" ]; then
-            log_error "Default shell is still $login_shell; run: chsh -s $zsh_path"
-            exit 1
-        fi
+        log_warn "TPM already installed, skipping..."
     fi
 }
 
-# Seed the per-machine Sway override (config.d/local.conf) from the OS template.
-# local.conf is git-ignored so each host keeps its own monitors/inputs without
-# clobbering the others. Skips if the host already has one.
-seed_sway_local() {
-    local repo_dir
-    repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-    local conf_dir="$repo_dir/sway/.config/sway/config.d"
-    local examples="$repo_dir/sway/.config/sway/examples"
-    local target="$conf_dir/local.conf"
-
-    if [ ! -d "$examples" ]; then
-        log_warn "Sway examples dir missing, skipping local.conf seed."
-        return
+# Setup passwordless sudo for safe commands
+setup_sudoers() {
+    local sudoers_file="/etc/sudoers.d/nopasswd-safe"
+    if [ ! -f "$sudoers_file" ]; then
+        log_info "Setting up passwordless sudo for safe commands..."
+        echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/dnf, /usr/bin/systemctl, /usr/bin/reboot, /usr/bin/poweroff, /usr/bin/mount, /usr/bin/umount, /usr/bin/dmesg, /usr/bin/journalctl, /usr/bin/nmap" \
+            | sudo tee "$sudoers_file" > /dev/null
+        sudo chmod 440 "$sudoers_file"
+        log_info "Sudoers configured!"
+    else
+        log_warn "Sudoers already configured, skipping..."
     fi
+}
 
-    if [ -f "$target" ]; then
-        log_info "Sway local.conf already exists, leaving it untouched."
-        return
+# Initialize tldr cache
+init_tldr() {
+    if command -v tldr &>/dev/null; then
+        log_info "Updating tldr cache..."
+        tldr --update &>/dev/null &
     fi
+}
 
-    local template
-    case "$OS" in
-        fedora) template="$examples/local.fedora-desktop.conf" ;;
-        ubuntu) template="$examples/local.ubuntu-laptop.conf" ;;
-        *)      template="$examples/local.conf.example" ;;
-    esac
-
-    [ -f "$template" ] || template="$examples/local.conf.example"
-
-    mkdir -p "$conf_dir"
-    cp "$template" "$target"
-    log_info "Seeded Sway local.conf from $(basename "$template")"
+# Set Zsh as default shell
+set_default_shell() {
+    if [ "$SHELL" != "$(which zsh)" ]; then
+        log_info "Setting Zsh as default shell..."
+        chsh -s $(which zsh)
+        log_info "Zsh set as default shell. Please log out and back in for changes to take effect."
+    else
+        log_info "Zsh is already the default shell"
+    fi
 }
 
 # Main installation flow
@@ -243,23 +235,30 @@ main() {
     install_packages
     echo
 
+    setup_sudoers
+    echo
+
     install_oh_my_zsh
     echo
 
     install_vim_plug
     echo
 
+    install_tpm
+    echo
+
     set_default_shell
     echo
 
-    seed_sway_local
-    echo
+    init_tldr
 
     log_info "Bootstrap complete!"
     log_info "Next steps:"
     echo "  1. Run './install.sh' to symlink your dotfiles"
     echo "  2. Restart your terminal or run 'exec zsh'"
     echo "  3. Run 'p10k configure' to set up your prompt"
+    echo "  4. Open tmux and press prefix+I to install plugins"
+    echo "  5. Create ~/.zshrc.local for machine-specific config (CUDA, etc.)"
 }
 
 main "$@"

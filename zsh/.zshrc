@@ -5,16 +5,8 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# User bin paths
-export PATH="$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH"
-
-# Ubuntu package compatibility aliases
-if command -v batcat >/dev/null 2>&1 && ! command -v bat >/dev/null 2>&1; then
-  alias bat='batcat'
-fi
-if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
-  alias fd='fdfind'
-fi
+# If you come from bash you might have to change your $PATH.
+# export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -119,44 +111,94 @@ source $ZSH/oh-my-zsh.sh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 #
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
+# ==================== Editor ====================
+
+export EDITOR='nvim'
+export VISUAL='nvim'
+
+# ==================== Aliases ====================
+
+alias vim='nvim'
+alias vi='nvim'
+alias v='nvim'
+
+# Dotfiles
+alias dots='cd ~/dotfiles'
+alias zrc='$EDITOR ~/dotfiles/zsh/.zshrc'
+alias src='source ~/.zshrc'
+
+# Navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# ls (eza if available, else ls)
+if command -v eza &>/dev/null; then
+    alias ls='eza --icons'
+    alias ll='eza -la --icons --git'
+    alias lt='eza -T --icons --level=2'
+    alias la='eza -a --icons'
+else
+    alias ls='ls --color=auto'
+    alias ll='ls -la'
+fi
+
+# cat → bat
+if command -v bat &>/dev/null; then
+    alias cat='bat --paging=never'
+    alias catp='bat'
+fi
+
+# find → fd (don't shadow fd binary)
+alias ff='fd --type f'
+alias fdir='fd --type d'
+
+# grep → ripgrep
+alias rg='rg --smart-case'
+
+# Git shortcuts (beyond oh-my-zsh git plugin)
+alias glog='git log --oneline --graph --decorate -20'
+alias gd='git diff'
+alias gds='git diff --staged'
+alias lg='lazygit'
+
+# Disk usage
+alias du='dust'
+alias df='duf'
+
+# System
+alias free='free -h'
+alias ports='ss -tulnp'
+alias top='btop'
+
+# ==================== Tool Integrations ====================
+
+# zoxide — smarter cd (type 'z dotfiles' from anywhere)
+eval "$(zoxide init zsh)"
+
+# fzf — fuzzy finder key bindings
+[ -f /usr/share/fzf/shell/key-bindings.zsh ] && source /usr/share/fzf/shell/key-bindings.zsh
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-if [ -f ~/.bashrc_private ]; then
-	. ~/.bashrc_private
-fi
-
-# Optional conda/mamba initialization. Keep machine-specific paths out of the repo.
-for conda_root in "$HOME/miniconda3" "$HOME/anaconda3" "$HOME/mambaforge"; do
-  if [ -x "$conda_root/bin/conda" ]; then
-    __conda_setup="$($conda_root/bin/conda shell.zsh hook 2>/dev/null)"
-    if [ $? -eq 0 ]; then
-      eval "$__conda_setup"
-    elif [ -f "$conda_root/etc/profile.d/conda.sh" ]; then
-      . "$conda_root/etc/profile.d/conda.sh"
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/home/anandsingh/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/home/anandsingh/anaconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/anandsingh/anaconda3/etc/profile.d/conda.sh"
     else
-      export PATH="$conda_root/bin:$PATH"
+        export PATH="/home/anandsingh/anaconda3/bin:$PATH"
     fi
-    unset __conda_setup
-    break
-  fi
-done
+fi
+unset __conda_setup
+# <<< conda initialize <<<
 
-
-# bun completions
-[ -s "/home/aks/.bun/_bun" ] && source "/home/aks/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-# Telisky dev tmux session: claude + pi panes, each in its own tscode worktree.
-# `tw` to launch/attach (idempotent); `tw <slug>` for a named task pair.
-alias tw='telisky-tmux'
-
-# Launch the Claude pane in dontAsk mode (auto-allow, still honors deny-list; NOT the full bypass)
-export TELISKY_TMUX_CLAUDE_MODE=dontAsk
+# Machine-specific config (CUDA, local paths, etc.)
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
