@@ -165,12 +165,26 @@ install_packages() {
                 wget \
                 build-essential \
                 htop \
-                fzf
+                fzf \
+                ripgrep \
+                jq \
+                bat \
+                fd-find \
+                eza \
+                zoxide \
+                git-delta \
+                btop \
+                duf \
+                tldr
 
+            mkdir -p ~/.local/bin
             # bat is called batcat on Ubuntu
             if ! command -v bat &> /dev/null && command -v batcat &> /dev/null; then
-                mkdir -p ~/.local/bin
-                ln -sf /usr/bin/batcat ~/.local/bin/bat
+                ln -sf "$(command -v batcat)" ~/.local/bin/bat
+            fi
+            # fd is called fdfind on Ubuntu
+            if ! command -v fd &> /dev/null && command -v fdfind &> /dev/null; then
+                ln -sf "$(command -v fdfind)" ~/.local/bin/fd
             fi
             ;;
     esac
