@@ -1,0 +1,7 @@
+# ~/.xprofile.local — generic template
+# Sourced by the common ~/.xprofile. X11 only. Put host-specific xrandr modes,
+# input quirks, or env here. Copy to ~/.xprofile.local and edit (bootstrap.sh
+# seeds this automatically per OS).
+
+# Example: force a custom mode on the internal panel
+#xrandr --output eDP-1 --primary --mode 1920x1080

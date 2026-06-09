@@ -318,6 +318,39 @@ seed_sway_local() {
     log_info "Seeded Sway local.conf from $(basename "$template")"
 }
 
+# Seed the per-machine xprofile override (~/.xprofile.local) from the OS template.
+# The common ~/.xprofile sources it; it's git-ignored so each host keeps its own
+# monitor/xrandr setup. X11 only. Skips if the host already has one.
+seed_xprofile_local() {
+    local repo_dir
+    repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    local examples="$repo_dir/xprofile/examples"
+    local target="$HOME/.xprofile.local"
+
+    if [ ! -d "$examples" ]; then
+        log_warn "xprofile examples dir missing, skipping .xprofile.local seed."
+        return
+    fi
+
+    if [ -f "$target" ]; then
+        log_info "~/.xprofile.local already exists, leaving it untouched."
+        return
+    fi
+
+    local template
+    case "$OS" in
+        fedora) template="$examples/local.fedora-desktop.xprofile" ;;
+        ubuntu) template="$examples/local.ubuntu-laptop.xprofile" ;;
+        *)      template="$examples/local.xprofile.example" ;;
+    esac
+
+    [ -f "$template" ] || template="$examples/local.xprofile.example"
+
+    cp "$template" "$target"
+    log_info "Seeded ~/.xprofile.local from $(basename "$template")"
+}
+
 # Main installation flow
 main() {
     log_info "Starting dotfiles bootstrap process..."
@@ -348,6 +381,9 @@ main() {
     echo
 
     seed_sway_local
+    echo
+
+    seed_xprofile_local
 
     log_info "Bootstrap complete!"
     log_info "Next steps:"

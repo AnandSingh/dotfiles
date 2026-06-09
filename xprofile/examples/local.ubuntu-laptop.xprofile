@@ -1,0 +1,4 @@
+# ~/.xprofile.local — Ubuntu laptop
+# Sourced by the common ~/.xprofile. X11 only — this laptop runs Sway (Wayland),
+# so this file is effectively unused here. Add X11-only host tweaks if you ever
+# boot an X session. Native panel resolution is left to autodetect.

@@ -13,3 +13,7 @@
 # Per-machine Sway overrides (monitors, inputs, machine-only apps).
 # Seeded from sway/.config/sway/examples/ by bootstrap.sh on each host.
 sway/.config/sway/config.d/local.conf
+
+# Per-machine xprofile override. Lives at $HOME/.xprofile.local (sourced by the
+# common ~/.xprofile), seeded per-OS from xprofile/examples/ by bootstrap.sh.
+.xprofile.local
