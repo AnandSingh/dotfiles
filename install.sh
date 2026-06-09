@@ -96,10 +96,16 @@ stow_package() {
     if [ -d "$DOTFILES_DIR/$package" ]; then
         log_info "${action}ing $package..."
 
+        # Tolerate per-package conflicts: warn and continue instead of letting
+        # 'set -e' abort the whole run (e.g. ~/.xprofile is a real file, not a link).
+        local rc=0
         if [ "$action" == "restow" ]; then
-            stow -R -d "$DOTFILES_DIR" -t "$HOME" "$package"
+            stow -R -d "$DOTFILES_DIR" -t "$HOME" "$package" || rc=$?
         else
-            stow -d "$DOTFILES_DIR" -t "$HOME" "$package"
+            stow -d "$DOTFILES_DIR" -t "$HOME" "$package" || rc=$?
+        fi
+        if [ "$rc" -ne 0 ]; then
+            log_warn "conflict on '$package' (stow rc=$rc) — skipped. Resolve manually, e.g. an existing real file shadowing a symlink."
         fi
     else
         log_warn "Package $package does not exist, skipping..."
