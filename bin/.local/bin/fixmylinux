@@ -289,17 +289,35 @@ do_fix() {
 # ===========================================================================
 do_full() {
     cd "$DOTFILES_DIR" || die "cannot cd to $DOTFILES_DIR"
-    local stashed=0
+    local stashed=0 branch
+    branch="$(git rev-parse --abbrev-ref HEAD)"
     step "Syncing dotfiles from origin"
     if ! git diff-index --quiet HEAD -- 2>/dev/null; then
         warn "uncommitted changes — stashing"
         git stash push -m "fixmylinux autostash" && stashed=1
     fi
-    git pull --rebase origin "$(git rev-parse --abbrev-ref HEAD)" || die "git pull failed — resolve manually"
+
+    # Fetch then fast-forward only. NEVER rebase or auto-merge here: this repo's
+    # history can contain merge commits, and 'pull --rebase' flattens them and
+    # re-fights already-resolved conflicts. ff-only is safe — it advances when we
+    # are strictly behind, no-ops when ahead, and stops cleanly on divergence.
+    git fetch origin "$branch" || warn "fetch failed (offline?) — skipping pull"
+    local behind ahead counts
+    counts="$(git rev-list --left-right --count "HEAD...FETCH_HEAD" 2>/dev/null)"
+    ahead="${counts%%[[:space:]]*}"; behind="${counts##*[[:space:]]}"
+    if [ "${behind:-0}" -gt 0 ] && [ "${ahead:-0}" -gt 0 ]; then
+        warn "diverged from origin/$branch (${ahead} ahead, ${behind} behind)."
+        warn "Not auto-merging — reconcile manually: 'git merge origin/$branch' (a merge, NOT a rebase)."
+    elif [ "${behind:-0}" -gt 0 ]; then
+        git merge --ff-only "FETCH_HEAD" && ok "fast-forwarded ${behind} commit(s)" \
+            || warn "fast-forward failed — reconcile manually"
+    else
+        ok "already up to date with origin/$branch${ahead:+ ($ahead ahead, unpushed)}"
+    fi
+
     if [ "$stashed" -eq 1 ]; then
         git stash pop || warn "stash pop had conflicts — resolve manually"
     fi
-    ok "repo up to date"
 
     step "Installing packages / tools (bootstrap)"
     ./bootstrap.sh || warn "bootstrap reported issues (continuing)"
