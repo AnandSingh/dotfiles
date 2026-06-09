@@ -132,24 +132,30 @@ check_repo() {
 
 check_symlinks() {
     step "Stow symlinks"
+    # A file counts as stowed if it resolves into the repo — whether through a
+    # direct file symlink, a tree-folded directory symlink, or no-folding links.
     local t real
     for t in "${EXPECTED_LINKS[@]}"; do
         local path="$HOME/$t"
-        if [ -L "$path" ]; then
-            if [ -e "$path" ]; then
-                real="$(readlink -f "$path")"
-                case "$real" in
-                    "$DOTFILES_DIR"/*) ok "$t -> repo" ;;
-                    *) warn "$t is a symlink but not into the dotfiles repo ($real)" ;;
-                esac
-            else
-                bad "$t is a DANGLING symlink — run 'fixmylinux fix'"
-            fi
-        elif [ -e "$path" ]; then
-            warn "$t exists but is a real file, not a stow symlink"
-        else
-            warn "$t missing — package not stowed? run 'fixmylinux fix'"
+        if [ -L "$path" ] && [ ! -e "$path" ]; then
+            bad "$t is a DANGLING symlink — run 'fixmylinux fix'"
+            continue
         fi
+        if [ ! -e "$path" ]; then
+            warn "$t missing — package not stowed? run 'fixmylinux fix'"
+            continue
+        fi
+        real="$(readlink -f "$path")"
+        case "$real" in
+            "$DOTFILES_DIR"/*) ok "$t -> repo" ;;
+            *)
+                if [ -L "$path" ]; then
+                    warn "$t is a symlink but not into the dotfiles repo ($real)"
+                else
+                    warn "$t is a real file, not stowed from the repo — run 'fixmylinux fix'"
+                fi
+                ;;
+        esac
     done
 }
 
