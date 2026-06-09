@@ -50,6 +50,51 @@ detect_os() {
     log_info "Detected OS: $OS"
 }
 
+# Install tools that aren't in Ubuntu apt, from GitHub release tarballs, into
+# ~/.local/bin. Tolerant: any failure warns and continues (never aborts bootstrap).
+install_github_binaries() {
+    command -v curl >/dev/null 2>&1 || { log_warn "curl missing; skipping extra tool binaries"; return 0; }
+    local bindir="$HOME/.local/bin"; mkdir -p "$bindir"
+    local arch; arch="$(uname -m)"
+    if [ "$arch" != "x86_64" ]; then
+        log_warn "arch '$arch': skipping lazygit/dust/glow binaries — install manually."
+        return 0
+    fi
+
+    _gh_install() {  # $1=binary name  $2=owner/repo  $3=asset-url regex
+        local name="$1" repo="$2" regex="$3"
+        if command -v "$name" >/dev/null 2>&1; then
+            log_info "$name already installed, skipping."
+            return 0
+        fi
+        local url
+        url="$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" \
+               | grep -ioE "https://[^\"]*${regex}[^\"]*" | head -1)" || true
+        if [ -z "$url" ]; then
+            log_warn "no matching $name release asset ($repo); skipping."
+            return 0
+        fi
+        log_info "Installing $name from $repo ..."
+        local d; d="$(mktemp -d)"
+        if curl -fsSL "$url" -o "$d/a.tar.gz" && tar -xzf "$d/a.tar.gz" -C "$d" 2>/dev/null; then
+            local bin; bin="$(find "$d" -type f -name "$name" | head -1)"
+            if [ -n "$bin" ]; then
+                install -m 0755 "$bin" "$bindir/$name"
+                log_info "$name installed to $bindir/$name"
+            else
+                log_warn "$name binary not found in archive; skipping."
+            fi
+        else
+            log_warn "download/extract failed for $name; skipping."
+        fi
+        rm -rf "$d"
+    }
+
+    _gh_install lazygit jesseduffield/lazygit 'linux_x86_64\.tar\.gz'
+    _gh_install dust    bootandy/dust         'x86_64-unknown-linux-gnu\.tar\.gz'
+    _gh_install glow    charmbracelet/glow    'linux_x86_64\.tar\.gz'
+}
+
 # Install packages based on OS
 install_packages() {
     log_info "Installing required packages for $OS..."
