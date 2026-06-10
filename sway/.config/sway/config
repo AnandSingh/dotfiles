@@ -1,11 +1,9 @@
-# Sway config — clean modern, AMD RX 6800 XT, 3840x2400
+# Sway config — clean modern, portable base. Per-host monitors, inputs, and
+# apps live in config.d/local.conf (seeded per-OS by bootstrap.sh, last include wins).
 
 # ==================== Output / Monitors ====================
 
-output eDP-1 resolution 3840x2400 position 0,0 scale 1
-output DP-1 resolution 3840x2160 position 3840,0
-output DP-2 resolution 3840x2160 position 0,0
-output HDMI-A-1 resolution 1920x1080 position 0,0 transform 90
+# Monitor resolutions/positions are host-specific — see config.d/local.conf.
 output * bg #1e1e2e solid_color
 
 # ==================== Input ====================
