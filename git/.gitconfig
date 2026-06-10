@@ -248,3 +248,9 @@
         required = true
 [oh-my-zsh]
 	hide-dirty = 1
+[credential "https://github.com"]
+	helper = 
+	helper = !/home/aks/.local/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/home/aks/.local/bin/gh auth git-credential
