@@ -1,0 +1,4 @@
+# ~/.config/kitty/local.conf — per-machine kitty overrides (git-ignored).
+# Sourced last by kitty.conf, so anything here wins. Common use: font_size for
+# the host's display DPI.
+# font_size 12.0

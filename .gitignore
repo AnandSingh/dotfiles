@@ -17,3 +17,7 @@ sway/.config/sway/config.d/local.conf
 # Per-machine xprofile override. Lives at $HOME/.xprofile.local (sourced by the
 # common ~/.xprofile), seeded per-OS from xprofile/examples/ by bootstrap.sh.
 .xprofile.local
+
+# Per-machine kitty override. Lives at $HOME/.config/kitty/local.conf (included
+# by kitty.conf), seeded per-OS from kitty/examples/ by bootstrap.sh.
+.config/kitty/local.conf

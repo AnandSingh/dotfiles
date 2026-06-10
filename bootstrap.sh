@@ -351,6 +351,40 @@ seed_xprofile_local() {
     log_info "Seeded ~/.xprofile.local from $(basename "$template")"
 }
 
+# Seed the per-machine kitty override (~/.config/kitty/local.conf) from the
+# OS template. kitty.conf includes it last, so it overrides the 4K font_size
+# default. Git-ignored; skips if the host already has one.
+seed_kitty_local() {
+    local repo_dir
+    repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    local examples="$repo_dir/kitty/examples"
+    local target="$HOME/.config/kitty/local.conf"
+
+    if [ ! -d "$examples" ]; then
+        log_warn "kitty examples dir missing, skipping local.conf seed."
+        return
+    fi
+
+    if [ -f "$target" ]; then
+        log_info "~/.config/kitty/local.conf already exists, leaving it untouched."
+        return
+    fi
+
+    local template
+    case "$OS" in
+        fedora) template="$examples/local.fedora-desktop.conf" ;;
+        ubuntu) template="$examples/local.ubuntu-laptop.conf" ;;
+        *)      template="$examples/local.conf.example" ;;
+    esac
+
+    [ -f "$template" ] || template="$examples/local.conf.example"
+
+    mkdir -p "$(dirname "$target")"
+    cp "$template" "$target"
+    log_info "Seeded ~/.config/kitty/local.conf from $(basename "$template")"
+}
+
 # Main installation flow
 main() {
     log_info "Starting dotfiles bootstrap process..."
@@ -384,6 +418,7 @@ main() {
     echo
 
     seed_xprofile_local
+    seed_kitty_local
 
     log_info "Bootstrap complete!"
     log_info "Next steps:"
