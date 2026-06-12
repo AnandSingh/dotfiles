@@ -171,10 +171,14 @@ check_configs() {
         info "zsh or ~/.zshrc absent — skipping"
     fi
 
-    # sway config (filter the harmless Nvidia/GPU launch warnings)
+    # sway config. Use a headless wlroots backend so validation parses the
+    # config without needing a reachable display — otherwise, run outside the
+    # live session, `sway -C` fails at backend creation ("Could not connect to
+    # remote display") and that gets misreported as a config error. Filter the
+    # harmless Nvidia/GPU launch warnings and any residual backend noise.
     if command -v sway >/dev/null 2>&1 && [ -e "$HOME/.config/sway/config" ]; then
         local errs
-        errs="$(sway -C --unsupported-gpu 2>&1 | grep -iE 'error|invalid|expected|unknown' | grep -viE 'nvidia|unsupported.gpu|gpu' || true)"
+        errs="$(WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 sway -C --unsupported-gpu 2>&1 | grep -iE 'error|invalid|expected|unknown' | grep -viE 'nvidia|unsupported.gpu|gpu|backend|wlr|remote display|create backend' || true)"
         if [ -z "$errs" ]; then ok "sway config parses"
         else bad "sway config error: $(printf '%s' "$errs" | head -1)"; fi
     else
