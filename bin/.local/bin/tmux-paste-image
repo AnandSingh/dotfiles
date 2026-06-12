@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# tmux-paste-image — save a Wayland clipboard image to a file and inject its
+# absolute path into the current tmux pane.
+#
+# Why: Claude Code (and other path-reading CLIs) can read image *files*, but
+# clipboard image paste (Ctrl+V) does not work inside tmux — tmux only forwards
+# text on paste. This bridges the gap: grab the clipboard image, write it to a
+# file, and type the path into the prompt so the tool can attach it.
+#
+# Bound to `prefix + C-v` in .tmux.conf.
+
+log=/tmp/tmux-paste-image.log
+
+# tmux freezes its startup environment; under sway, kitty sometimes launches
+# without these set. Recover them from the live runtime dir if missing.
+: "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
+export XDG_RUNTIME_DIR
+if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    export WAYLAND_DISPLAY="$(basename "$(ls "$XDG_RUNTIME_DIR"/wayland-[0-9]* 2>/dev/null | grep -v lock | head -n1)" 2>/dev/null)"
+fi
+
+types="$(wl-paste --list-types 2>>"$log")"
+
+# Diagnostics so we can see exactly what happened on each press.
+{
+    echo "--- $(date '+%F %T') ---"
+    echo "WAYLAND_DISPLAY=$WAYLAND_DISPLAY  XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR"
+    echo "types: $(echo "$types" | tr '\n' ' ')"
+} >> "$log"
+
+# Pick the first image/* MIME type the clipboard offers (prefer png).
+mime="$(echo "$types" | grep -m1 '^image/png' || echo "$types" | grep -m1 '^image/')"
+
+if [ -z "$mime" ]; then
+    # No image on the clipboard — fall back to a normal text paste, so a single
+    # Ctrl+v handles everything (image -> file path, text -> paste as usual).
+    wl-paste --no-newline 2>>"$log" | tmux load-buffer - 2>>"$log" && tmux paste-buffer -p
+    exit 0
+fi
+
+dir="$HOME/Pictures/clipboard"
+mkdir -p "$dir"
+ext="${mime#image/}"; ext="${ext%%;*}"; [ "$ext" = "jpeg" ] && ext="jpg"
+file="$dir/$(date +%Y%m%d-%H%M%S).$ext"
+
+if wl-paste -t "$mime" > "$file" 2>>"$log" && [ -s "$file" ]; then
+    echo "saved: $file ($(wc -c < "$file") bytes)" >> "$log"
+    # -l = literal text; types the path but does NOT press Enter, so you can
+    # add a sentence ("analyze this:") before submitting.
+    tmux send-keys -l " $file "
+    tmux display-message "paste-image: $file"
+else
+    rm -f "$file"
+    tmux display-message "paste-image: failed to read image ($mime)"
+fi
