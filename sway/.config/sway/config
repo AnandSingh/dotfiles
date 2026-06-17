@@ -178,6 +178,10 @@ bindsym Print exec grim - | wl-copy && notify-send "Screenshot copied"
 bindsym $mod+Print exec grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png && notify-send "Screenshot saved"
 bindsym $mod+Shift+Print exec grim -g "$(slurp)" - | wl-copy && notify-send "Area copied"
 bindsym Alt+Print exec swaymsg -t get_tree | jq -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"' | grim -g - - | wl-copy && notify-send "Window copied"
+# Print-key-free aliases (Advantage360 has no PrtSc on the base layer)
+bindsym $mod+p exec grim -g "$(slurp)" - | wl-copy && notify-send "Area copied"
+bindsym $mod+Shift+p exec grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png && notify-send "Screenshot saved"
+bindsym $mod+Ctrl+p exec swaymsg -t get_tree | jq -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"' | grim -g - - | wl-copy && notify-send "Window copied"
 
 # Clipboard manager
 bindsym $mod+Alt+v exec cliphist list | rofi -dmenu -p "Clipboard" | cliphist decode | wl-copy
