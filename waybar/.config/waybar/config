@@ -1,11 +1,11 @@
 {
     "layer": "top",
-    "position": "top",
+    "position": "bottom",
     "height": 32,
     "spacing": 0,
 
-    "modules-left": ["sway/workspaces", "sway/mode", "sway/scratchpad"],
-    "modules-center": ["custom/weather", "clock"],
+    "modules-left": ["custom/weather", "clock"],
+    "modules-center": ["sway/workspaces", "sway/mode", "sway/scratchpad"],
     "modules-right": ["idle_inhibitor", "cpu", "memory", "temperature", "pulseaudio", "network", "bluetooth", "battery", "tray", "custom/notification"],
 
     "sway/workspaces": {
