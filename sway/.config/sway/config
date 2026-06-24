@@ -87,7 +87,6 @@ bindsym $mod+t exec swaymsg '[app_id="kitty"]' focus || exec $term
 bindsym $mod+space exec $menu
 bindsym $mod+b exec $browser --new-window
 bindsym $mod+e exec $filemanager
-bindsym $mod+c exec code-fb
 
 # Dropdown terminal — rolls down from top, toggle with $mod+grave
 bindsym $mod+grave exec swaymsg '[app_id="dropdown"]' scratchpad show || exec $term --class dropdown -o shell=zsh
