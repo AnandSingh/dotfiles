@@ -164,6 +164,6 @@
         "format": "⏻",
         "tooltip": true,
         "tooltip-format": "Power menu",
-        "on-click": "~/.config/sway/scripts/power-menu.sh"
+        "on-click": "$HOME/.config/sway/scripts/power-menu.sh"
     }
 }
