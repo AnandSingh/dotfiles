@@ -437,6 +437,48 @@ seed_kitty_local() {
     log_info "Seeded ~/.config/kitty/local.conf from $(basename "$template")"
 }
 
+# Install the GTK theme + icon theme referenced by the stowed gtk/settings.ini.
+# Both go into userspace dirs (~/.themes, ~/.local/share/icons) so no root/dnf is
+# needed — Fedora's gtk3 ships no on-disk Adwaita CSS, so GTK apps (Thunar, etc.)
+# fall back to light without a real dark theme present. Catppuccin Mocha matches
+# the repo's kitty/sway/delta theme; Papirus-Dark is the paired icon set.
+install_gtk_theme() {
+    [ "$OS" = "linux" ] || return 0
+
+    local gtk_theme="catppuccin-mocha-blue-standard+default"
+    local gtk_ver="v1.0.3"
+
+    if [ -d "$HOME/.themes/$gtk_theme" ]; then
+        log_info "GTK theme $gtk_theme already present, skipping."
+    else
+        log_info "Installing Catppuccin Mocha GTK theme to ~/.themes..."
+        mkdir -p "$HOME/.themes"
+        local url="https://github.com/catppuccin/gtk/releases/download/${gtk_ver}/${gtk_theme}.zip"
+        local tmp
+        tmp="$(mktemp -d)"
+        if curl -sL --max-time 60 -o "$tmp/theme.zip" "${url//+/%2B}" \
+            && unzip -oq "$tmp/theme.zip" -d "$HOME/.themes/"; then
+            log_info "Installed GTK theme $gtk_theme."
+        else
+            log_warn "Failed to fetch Catppuccin GTK theme; GTK apps may stay light."
+        fi
+        rm -rf "$tmp"
+    fi
+
+    if [ -d "$HOME/.local/share/icons/Papirus-Dark" ]; then
+        log_info "Papirus-Dark icons already present, skipping."
+    else
+        log_info "Installing Papirus icon theme to ~/.local/share/icons..."
+        mkdir -p "$HOME/.local/share/icons"
+        if curl -sL https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh \
+            | DESTDIR="$HOME/.local/share/icons" sh >/dev/null 2>&1; then
+            log_info "Installed Papirus icon theme."
+        else
+            log_warn "Failed to install Papirus icons; falling back to default icon theme."
+        fi
+    fi
+}
+
 # Main installation flow
 main() {
     log_info "Starting dotfiles bootstrap process..."
@@ -474,6 +516,9 @@ main() {
 
     seed_xprofile_local
     seed_kitty_local
+    echo
+
+    install_gtk_theme
 
     log_info "Bootstrap complete!"
     log_info "Next steps:"

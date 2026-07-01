@@ -59,6 +59,7 @@ LINUX_WM_PACKAGES=(
     "sway"
     "swaync"
     "kitty"
+    "gtk"
     "waybar"
     "i3"
     "hyprland"
