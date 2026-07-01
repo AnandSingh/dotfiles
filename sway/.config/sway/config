@@ -80,7 +80,7 @@ exec {
 # Workspace 1 terminal: telisky-tmux dev session on Ubuntu, plain tmux elsewhere.
 exec swaymsg "workspace 1; exec $term -e sh -c 'if grep -qi ubuntu /etc/os-release 2>/dev/null && [ -x \"$HOME/.local/bin/telisky-tmux\" ]; then exec \"$HOME/.local/bin/telisky-tmux\"; else exec tmux new-session -A -s main; fi'"
 exec swaymsg "workspace 2; exec $browser"
-exec swaymsg "workspace 7; exec $browser --new-window --app=https://chat.google.com"
+# exec swaymsg "workspace 7; exec $browser --new-window --app=https://chat.google.com"  # disabled: Google Chat autostart removed
 exec ~/.config/sway/scripts/dropdown-autohide.sh
 
 # ==================== Key Bindings — Apps ====================
