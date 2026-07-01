@@ -92,6 +92,22 @@ tooltip label {
     color: #f38ba8;
 }
 
+#custom-twingate {
+    padding: 0 8px;
+}
+
+#custom-twingate.online {
+    color: #a6e3a1;
+}
+
+#custom-twingate.connecting {
+    color: #f9e2af;
+}
+
+#custom-twingate.offline {
+    color: #6c7086;
+}
+
 #bluetooth {
     color: #89b4fa;
 }

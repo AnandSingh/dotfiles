@@ -6,7 +6,7 @@
 
     "modules-left": ["custom/weather", "clock"],
     "modules-center": ["sway/workspaces", "sway/mode", "sway/scratchpad"],
-    "modules-right": ["idle_inhibitor", "cpu", "memory", "temperature", "pulseaudio", "network", "bluetooth", "battery", "tray", "custom/notification", "custom/power"],
+    "modules-right": ["idle_inhibitor", "cpu", "memory", "temperature", "pulseaudio", "network", "custom/twingate", "bluetooth", "battery", "tray", "custom/notification", "custom/power"],
 
     "sway/workspaces": {
         "disable-scroll": false,
@@ -116,6 +116,15 @@
         "format-disconnected": "⚠ disconnected",
         "tooltip-format": "{ifname}: {ipaddr}/{cidr}\n{essid}",
         "on-click": "nm-connection-editor"
+    },
+
+    "custom/twingate": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 5,
+        "exec": "~/.config/waybar/custom_modules/twingate.sh",
+        "on-click": "twingate status 2>/dev/null | grep -q online && twingate stop || twingate start",
+        "tooltip": true
     },
 
     "bluetooth": {
