@@ -1,0 +1,9 @@
+[Unit]
+Description=Dell HUD wallpaper fetch (wallhaven -> sway output bg)
+Documentation=file:%h/dotfiles/docs/superpowers/specs/2026-07-01-dell-ambient-hud-design.md
+
+[Service]
+Type=oneshot
+# art-fetch.sh self-detects SWAYSOCK (this unit does not inherit it) and no-ops
+# when the Dell is undocked.
+ExecStart=%h/.config/eww/scripts/art-fetch.sh

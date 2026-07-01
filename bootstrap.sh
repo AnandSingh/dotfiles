@@ -479,6 +479,29 @@ install_gtk_theme() {
     fi
 }
 
+# Install eww for the Dell ambient HUD (Linux/Fedora only). eww isn't in Fedora's
+# base repos; the varlad/eww COPR carries an F44 build. The HUD itself only runs on
+# the NVIDIA laptop (guarded on the Dell being docked in sway/config.d/local.conf),
+# but the eww package + config are portable, so we install the tool on any Fedora box.
+# Wallpaper rotation uses sway's own `output bg` + ImageMagick (no swww — archived).
+install_hud_tools() {
+    [ "$OS" = "linux" ] || return 0
+    command -v dnf >/dev/null 2>&1 || return 0
+
+    if command -v eww-x11 >/dev/null 2>&1 || command -v eww >/dev/null 2>&1; then
+        log_info "eww already installed, skipping."
+    else
+        log_info "Installing eww (varlad/eww COPR) for the Dell ambient HUD..."
+        sudo dnf copr enable -y varlad/eww >/dev/null 2>&1 \
+            && sudo dnf install -y eww >/dev/null 2>&1 \
+            && log_info "Installed eww." \
+            || log_warn "Failed to install eww; the Dell HUD overlay won't start."
+    fi
+
+    # ImageMagick powers the center-crop in art-fetch.sh; jq/curl parse wallhaven.
+    command -v magick >/dev/null 2>&1 || sudo dnf install -y ImageMagick >/dev/null 2>&1 || true
+}
+
 # Main installation flow
 main() {
     log_info "Starting dotfiles bootstrap process..."
@@ -519,6 +542,9 @@ main() {
     echo
 
     install_gtk_theme
+    echo
+
+    install_hud_tools
 
     log_info "Bootstrap complete!"
     log_info "Next steps:"

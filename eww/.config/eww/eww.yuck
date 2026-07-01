@@ -1,0 +1,29 @@
+;; Dell ambient HUD — top-strip overlay (clock + date + quote + fake-EQ bars).
+;; Rendered as a layer-shell window on the Dell top monitor's top 720px.
+
+(defpoll TIME  :interval "1s"  `date +%H:%M`)
+(defpoll DATE  :interval "60s" `date "+%a %b %d"`)
+(defpoll QUOTE :interval "30s" `~/.config/eww/scripts/quote.sh`)
+
+(defwidget bars []
+  (box :class "bars" :space-evenly true :spacing 6 :valign "end"
+    (for i in "[1,2,3,4,5,6,7,8,9,10,11,12]"
+      (box :class "bar bar-${i}"))))
+
+(defwidget hud []
+  (box :class "hud" :orientation "h" :space-evenly false
+    (box :class "left" :orientation "v" :space-evenly false :halign "start" :valign "center"
+      (label :class "clock" :text TIME :halign "start")
+      (label :class "date"  :text DATE :halign "start"))
+    (box :class "mid" :hexpand true :halign "center" :valign "center"
+      (bars))
+    (box :class "right" :orientation "v" :space-evenly false :halign "end" :valign "center"
+      (label :class "quote" :text QUOTE :halign "end" :limit-width 90 :wrap true))))
+
+(defwindow dell-hud
+  :monitor 0
+  :stacking "bottom"
+  :exclusive false
+  :focusable false
+  :geometry (geometry :x "0" :y "0" :width "100%" :height "720px" :anchor "top center")
+  (hud))

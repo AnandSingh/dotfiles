@@ -1,0 +1,10 @@
+[Unit]
+Description=Rotate the Dell HUD wallpaper every 20 minutes
+
+[Timer]
+OnActiveSec=20min
+OnUnitActiveSec=20min
+Persistent=false
+
+[Install]
+WantedBy=timers.target
