@@ -36,12 +36,25 @@
 }
 
 // --- live audio EQ bars (driven by cava; height set inline per frame) ---
-.bars { min-height: 110px; }
+// Bigger + rainbow: each bar a distinct Catppuccin accent across the spectrum.
+.bars { min-height: 210px; }
 
 .bar {
-  min-width: 9px;
+  min-width: 14px;
   min-height: 3px;
-  background-color: #89b4fa;            // Catppuccin blue
-  border-radius: 5px;
-  transition: min-height 60ms linear;   // smooth between cava frames
+  border-radius: 7px;
+  transition: min-height 55ms linear;   // smooth between cava frames
 }
+
+.bar-0  { background-color: #f38ba8; }  // red
+.bar-1  { background-color: #fab387; }  // peach
+.bar-2  { background-color: #f9e2af; }  // yellow
+.bar-3  { background-color: #a6e3a1; }  // green
+.bar-4  { background-color: #94e2d5; }  // teal
+.bar-5  { background-color: #89dceb; }  // sky
+.bar-6  { background-color: #74c7ec; }  // sapphire
+.bar-7  { background-color: #89b4fa; }  // blue
+.bar-8  { background-color: #b4befe; }  // lavender
+.bar-9  { background-color: #cba6f7; }  // mauve
+.bar-10 { background-color: #f5c2e7; }  // pink
+.bar-11 { background-color: #f38ba8; }  // red (wrap)

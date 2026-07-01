@@ -9,9 +9,9 @@
 (deflisten CAVA :initial "[0,0,0,0,0,0,0,0,0,0,0,0]" `~/.config/eww/scripts/cava.sh`)
 
 (defwidget bars []
-  (box :class "bars" :space-evenly true :spacing 6 :valign "end"
-    (for h in CAVA
-      (box :class "bar" :valign "end" :style "min-height: ${h}px;"))))
+  (box :class "bars" :space-evenly true :spacing 7 :valign "end"
+    (for i in "[0,1,2,3,4,5,6,7,8,9,10,11]"
+      (box :class "bar bar-${i}" :valign "end" :style "min-height: ${CAVA[i] * 2.0}px;"))))
 
 (defwidget hud []
   (box :class "hud" :orientation "h" :space-evenly false
