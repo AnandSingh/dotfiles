@@ -60,6 +60,7 @@ LINUX_WM_PACKAGES=(
     "swaync"
     "kitty"
     "gtk"
+    "pipewire"
     "waybar"
     "i3"
     "hyprland"
