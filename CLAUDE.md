@@ -8,7 +8,7 @@ Personal dotfiles managed with GNU Stow on Fedora Linux (Wayland/Sway). Each top
 
 ```
 dotfiles/
-├── bootstrap.sh          # Installs system packages, dev tools, sudoers, oh-my-zsh, TPM
+├── bootstrap.sh          # Installs system packages, dev tools, Sway desktop, sudoers, oh-my-zsh, TPM
 ├── install.sh            # Stows packages as symlinks to $HOME
 ├── update.sh             # Pull + bootstrap + restow (sync existing PC)
 ├── remote-install.sh     # One-liner for fresh PC setup via curl
@@ -48,6 +48,15 @@ dotfiles/
 ## Dev tools installed via bootstrap
 
 eza, fd-find, zoxide, git-delta, lazygit, fzf, ripgrep, bat, btop, tldr, dust, duf, glow, jq.
+
+## Sway desktop installed via bootstrap (Linux)
+
+`install_sway_desktop()` installs the compositor + the apps the stowed configs
+launch: sway, swaybg/swayidle/swaylock, waybar, rofi/wofi/fuzzel, mako, grim,
+slurp, wl-clipboard, kitty ($term), thunar ($filemanager), brightnessctl,
+playerctl, pavucontrol, polkit-gnome, xdg-desktop-portal-wlr, fonts. GPU drivers
+are NOT installed here (host-specific) — NVIDIA hosts run `nvidia-sway/install-nvidia-driver.sh`
+then `install-nvidia-session.sh` (see nvidia-sway/README.md).
 
 All wired into zsh via aliases in `.zshrc`:
 - `ls/ll/lt` → eza

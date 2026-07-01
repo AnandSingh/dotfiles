@@ -192,6 +192,49 @@ install_packages() {
     log_info "Packages installed successfully!"
 }
 
+# Install the Sway desktop environment + companions (Linux only).
+# bootstrap's core step installs the shell/dev tools but NOT the compositor or
+# the apps the stowed configs actually launch: kitty ($term), rofi ($menu),
+# waybar, the lock/idle/notification stack, screenshot tools, and a polkit agent.
+# Without these, `./install.sh linux-wm` stows configs that can't launch.
+# GPU drivers are deliberately out of scope (host-specific: AMD desktop vs
+# NVIDIA laptop) — see nvidia-sway/ and the per-host graphics setup.
+install_sway_desktop() {
+    case "$OS" in
+        fedora)
+            log_info "Installing Sway desktop environment + companions..."
+            sudo dnf install -y \
+                sway swaybg swayidle swaylock \
+                waybar rofi wofi fuzzel mako \
+                grim slurp wl-clipboard \
+                kitty thunar \
+                brightnessctl playerctl pavucontrol \
+                NetworkManager-tui network-manager-applet blueman \
+                mate-polkit xdg-desktop-portal-wlr \
+                jetbrains-mono-fonts fontawesome-fonts-all google-noto-emoji-fonts \
+                || log_warn "Some Sway packages failed to install; review the output above."
+            # swww (animated wallpaper) isn't always packaged — optional.
+            sudo dnf install -y swww 2>/dev/null || log_warn "swww not in repos; wallpaper exec stays optional."
+            ;;
+        ubuntu)
+            log_info "Installing Sway desktop environment + companions..."
+            sudo apt install -y \
+                sway swaybg swayidle swaylock \
+                waybar rofi wofi fuzzel mako-notifier \
+                grim slurp wl-clipboard \
+                kitty thunar \
+                brightnessctl playerctl pavucontrol \
+                network-manager-gnome blueman \
+                policykit-1-gnome xdg-desktop-portal-wlr \
+                fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji \
+                || log_warn "Some Sway packages failed to install; review the output above."
+            ;;
+        macos)
+            : # No Sway on macOS — skip silently.
+            ;;
+    esac
+}
+
 # Install Oh My Zsh
 install_oh_my_zsh() {
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -304,9 +347,18 @@ seed_sway_local() {
         return
     fi
 
+    # Both Fedora hosts share OS=fedora, so split them by chassis: the laptop
+    # (ThinkPad) gets the DP-2-main + lid-switch profile, the desktop keeps its
+    # monitor wall. `hostnamectl chassis` reports "laptop"/"desktop".
     local template
     case "$OS" in
-        fedora) template="$examples/local.fedora-desktop.conf" ;;
+        fedora)
+            if [ "$(hostnamectl chassis 2>/dev/null)" = "laptop" ]; then
+                template="$examples/local.fedora-laptop.conf"
+            else
+                template="$examples/local.fedora-desktop.conf"
+            fi
+            ;;
         ubuntu) template="$examples/local.ubuntu-laptop.conf" ;;
         *)      template="$examples/local.conf.example" ;;
     esac
@@ -371,18 +423,9 @@ seed_kitty_local() {
         return
     fi
 
-    # Both Fedora hosts share OS=fedora, so split them by chassis: the laptop
-    # (ThinkPad) gets the DP-2-main + lid-switch profile, the desktop keeps its
-    # monitor wall. `hostnamectl chassis` reports "laptop"/"desktop".
     local template
     case "$OS" in
-        fedora)
-            if [ "$(hostnamectl chassis 2>/dev/null)" = "laptop" ]; then
-                template="$examples/local.fedora-laptop.conf"
-            else
-                template="$examples/local.fedora-desktop.conf"
-            fi
-            ;;
+        fedora) template="$examples/local.fedora-desktop.conf" ;;
         ubuntu) template="$examples/local.ubuntu-laptop.conf" ;;
         *)      template="$examples/local.conf.example" ;;
     esac
@@ -403,6 +446,9 @@ main() {
     echo
 
     install_packages
+    echo
+
+    install_sway_desktop
     echo
 
     setup_sudoers
