@@ -5,10 +5,13 @@
 (defpoll DATE  :interval "60s" `date "+%a %b %d"`)
 (defpoll QUOTE :interval "30s" `~/.config/eww/scripts/quote.sh`)
 
+;; live audio EQ — cava.sh streams a JSON array of 12 bar heights (0-100) per frame
+(deflisten CAVA :initial "[0,0,0,0,0,0,0,0,0,0,0,0]" `~/.config/eww/scripts/cava.sh`)
+
 (defwidget bars []
   (box :class "bars" :space-evenly true :spacing 6 :valign "end"
-    (for i in "[1,2,3,4,5,6,7,8,9,10,11,12]"
-      (box :class "bar bar-${i}"))))
+    (for h in CAVA
+      (box :class "bar" :valign "end" :style "min-height: ${h}px;"))))
 
 (defwidget hud []
   (box :class "hud" :orientation "h" :space-evenly false

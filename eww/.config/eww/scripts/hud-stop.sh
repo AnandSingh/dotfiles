@@ -14,6 +14,7 @@ fi
 systemctl --user stop dell-hud-art.timer 2>/dev/null || true
 eww-x11 close dell-hud 2>/dev/null || true
 eww-x11 kill 2>/dev/null || true
+pkill -x cava 2>/dev/null || true    # eww deflisten spawns cava for the EQ bars
 
 # reset the Dell wallpaper back to the solid theme colour
 if [ -S "${SWAYSOCK:-}" ]; then

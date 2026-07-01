@@ -35,35 +35,13 @@
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
 }
 
-// --- fake-EQ ambient bars (no audio) ---
+// --- live audio EQ bars (driven by cava; height set inline per frame) ---
 .bars { min-height: 110px; }
 
 .bar {
   min-width: 9px;
-  min-height: 14px;
+  min-height: 3px;
   background-color: #89b4fa;            // Catppuccin blue
   border-radius: 5px;
-  animation-name: eq;
-  animation-duration: 1.3s;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
+  transition: min-height 60ms linear;   // smooth between cava frames
 }
-
-@keyframes eq {
-  0%   { min-height: 14px;  background-color: #89b4fa; }
-  50%  { min-height: 104px; background-color: #b4befe; }
-  100% { min-height: 14px;  background-color: #89b4fa; }
-}
-
-.bar-1  { animation-delay: 0.00s; }
-.bar-2  { animation-delay: 0.11s; }
-.bar-3  { animation-delay: 0.22s; }
-.bar-4  { animation-delay: 0.33s; }
-.bar-5  { animation-delay: 0.44s; }
-.bar-6  { animation-delay: 0.55s; }
-.bar-7  { animation-delay: 0.50s; }
-.bar-8  { animation-delay: 0.40s; }
-.bar-9  { animation-delay: 0.30s; }
-.bar-10 { animation-delay: 0.20s; }
-.bar-11 { animation-delay: 0.10s; }
-.bar-12 { animation-delay: 0.00s; }

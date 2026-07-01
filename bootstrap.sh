@@ -500,6 +500,9 @@ install_hud_tools() {
 
     # ImageMagick powers the center-crop in art-fetch.sh; jq/curl parse wallhaven.
     command -v magick >/dev/null 2>&1 || sudo dnf install -y ImageMagick >/dev/null 2>&1 || true
+
+    # cava drives the audio-reactive EQ bars (reads the PipeWire output monitor).
+    command -v cava >/dev/null 2>&1 || sudo dnf install -y cava >/dev/null 2>&1 || true
 }
 
 # Main installation flow
