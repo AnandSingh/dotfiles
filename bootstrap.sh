@@ -371,9 +371,18 @@ seed_kitty_local() {
         return
     fi
 
+    # Both Fedora hosts share OS=fedora, so split them by chassis: the laptop
+    # (ThinkPad) gets the DP-2-main + lid-switch profile, the desktop keeps its
+    # monitor wall. `hostnamectl chassis` reports "laptop"/"desktop".
     local template
     case "$OS" in
-        fedora) template="$examples/local.fedora-desktop.conf" ;;
+        fedora)
+            if [ "$(hostnamectl chassis 2>/dev/null)" = "laptop" ]; then
+                template="$examples/local.fedora-laptop.conf"
+            else
+                template="$examples/local.fedora-desktop.conf"
+            fi
+            ;;
         ubuntu) template="$examples/local.ubuntu-laptop.conf" ;;
         *)      template="$examples/local.conf.example" ;;
     esac
