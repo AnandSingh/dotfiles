@@ -215,3 +215,6 @@ unset __conda_setup
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# npm global (user-local) — added for codex CLI
+export PATH="$HOME/.npm-global/bin:$PATH"
