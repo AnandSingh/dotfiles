@@ -151,6 +151,17 @@ tooltip label {
     padding: 0 8px;
 }
 
+#custom-power {
+    color: #f38ba8;
+    padding: 0 12px 0 8px;
+    font-size: 15px;
+}
+
+#custom-power:hover {
+    background-color: #f38ba8;
+    color: #1e1e2e;
+}
+
 /* Spacing for right-side modules */
 #cpu, #memory, #temperature, #pulseaudio, #network, #bluetooth, #battery, #idle_inhibitor, #tray, #custom-notification, #scratchpad {
     padding: 0 8px;

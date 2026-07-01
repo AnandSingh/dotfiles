@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# tmux-project — fuzzy-find a project directory and open it as a NEW WINDOW in
+# the current tmux session. Like `prefix c`, but it drops you straight into the
+# chosen project directory instead of the current path. Fits a single-session,
+# many-windows workflow.
+#
+# Usage:
+#   tmux-project          pick a project with fzf
+#   tmux-project ~/path   open a window for a specific directory
+
+search_roots=()
+for d in "$HOME/work" "$HOME/code" "$HOME/projects" "$HOME/src" "$HOME/repos"; do
+    [[ -d $d ]] && search_roots+=("$d")
+done
+standalone_dirs=("$HOME/dotfiles")
+
+if [[ $# -eq 1 ]]; then
+    selected="$1"
+else
+    selected=$(
+        {
+            [[ ${#search_roots[@]} -gt 0 ]] && \
+                find "${search_roots[@]}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+            for s in "${standalone_dirs[@]}"; do [[ -d $s ]] && echo "$s"; done
+        } | sort -u | fzf --prompt "project> " --reverse --border
+    )
+fi
+
+[[ -z $selected ]] && exit 0
+
+name=$(basename "$selected" | tr '.: ' '___')
+
+# Open (or jump to) a window for this project in the current session.
+# Reuse an existing window with the same name if there is one.
+target_session=$(tmux display-message -p '#S' 2>/dev/null || echo main)
+if tmux list-windows -t "$target_session" -F '#W' 2>/dev/null | grep -qx "$name"; then
+    tmux select-window -t "$target_session:$name"
+else
+    tmux new-window -t "$target_session" -c "$selected" -n "$name"
+fi

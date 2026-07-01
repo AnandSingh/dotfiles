@@ -57,6 +57,7 @@ GNOME_PACKAGES=(
 
 LINUX_WM_PACKAGES=(
     "sway"
+    "swaync"
     "kitty"
     "waybar"
     "i3"

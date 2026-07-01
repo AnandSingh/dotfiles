@@ -39,6 +39,9 @@ gaps outer 2
 smart_gaps on
 smart_borders on
 
+# Focus the window under the cursor automatically
+focus_follows_mouse yes
+
 # class                 border  bg      text    indicator child_border
 client.focused          #89b4fa #1e1e2e #cdd6f4 #89b4fa   #89b4fa
 client.focused_inactive #45475a #1e1e2e #cdd6f4 #45475a   #45475a
@@ -56,8 +59,11 @@ exec_always --no-startup-id {
 }
 
 exec {
+    /usr/libexec/xdg-desktop-portal-wlr
+    /usr/libexec/xdg-desktop-portal-gtk
+    /usr/libexec/xdg-desktop-portal
     waybar
-    # swaync (install SwayNotificationCenter if desired)
+    swaync
     nm-applet --indicator
     wl-paste --type text --watch cliphist store
     wl-paste --type image --watch cliphist store
@@ -84,7 +90,6 @@ bindsym $mod+t exec swaymsg '[app_id="kitty"]' focus || exec $term
 bindsym $mod+space exec $menu
 bindsym $mod+b exec $browser --new-window
 bindsym $mod+e exec $filemanager
-bindsym $mod+c exec code-fb
 
 # Dropdown terminal — rolls down from top, toggle with $mod+grave
 bindsym $mod+grave exec swaymsg '[app_id="dropdown"]' scratchpad show || exec $term --class dropdown -o shell=zsh
@@ -157,7 +162,8 @@ bindsym $mod+Shift+8 move container to workspace number 8
 bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
-bindsym $mod+Tab workspace next_on_output
+# $mod+Tab — window switcher (jump to any window by name, Alt-Tab style)
+bindsym $mod+Tab exec ~/.config/sway/scripts/window-switcher.sh
 bindsym $mod+Shift+Tab workspace prev_on_output
 
 bindsym --whole-window $mod+button4 workspace prev_on_output
@@ -166,18 +172,27 @@ bindsym --whole-window $mod+button5 workspace next_on_output
 # ==================== System ====================
 
 bindsym $mod+Shift+r reload
+bindsym $mod+F1 exec ~/.config/sway/scripts/keybinding-help.sh
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit Sway?' -B 'Yes' 'swaymsg exit'
 bindsym Control+Alt+l exec $lock
-bindsym Control+Alt+Delete exec wlogout
+bindsym Control+Alt+Delete exec ~/.config/sway/scripts/power-menu.sh
 
 # Screenshots
 bindsym Print exec grim - | wl-copy && notify-send "Screenshot copied"
 bindsym $mod+Print exec grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png && notify-send "Screenshot saved"
-bindsym $mod+Shift+Print exec grim -g "$(slurp)" - | wl-copy && notify-send "Area copied"
+bindsym $mod+Shift+Print exec grim -g "$(slurp)" - | swappy -f -
 bindsym Alt+Print exec swaymsg -t get_tree | jq -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"' | grim -g - - | wl-copy && notify-send "Window copied"
+# Print-key-free aliases (Advantage360 has no PrtSc on the base layer)
+# $mod+p opens the area capture in swappy for annotate/crop/blur before save/copy
+bindsym $mod+p exec grim -g "$(slurp)" - | swappy -f -
+bindsym $mod+Shift+p exec grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png && notify-send "Screenshot saved"
+bindsym $mod+Ctrl+p exec swaymsg -t get_tree | jq -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"' | grim -g - - | wl-copy && notify-send "Window copied"
 
 # Clipboard manager
 bindsym $mod+Alt+v exec cliphist list | rofi -dmenu -p "Clipboard" | cliphist decode | wl-copy
+
+# Emoji picker (copies selection to clipboard)
+bindsym $mod+period exec ~/.config/sway/scripts/emoji-picker.sh
 
 # Media keys
 bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+

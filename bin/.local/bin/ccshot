@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# ccshot — capture the Wayland screen for Claude Code (or anything) to read.
+#
+# Usage:
+#   ccshot            capture all outputs to /tmp/cc-shot.png
+#   ccshot -a         select a region with slurp
+#   ccshot -o NAME    capture a specific output (e.g. ccshot -o DP-1)
+#   ccshot PATH       write to PATH instead of the default
+#
+# Prints the path of the saved PNG on stdout. Auto-detects the live Wayland
+# display + sway socket, which tmux/systemd-launched shells often don't export.
+
+set -euo pipefail
+
+uid=$(id -u)
+out=/tmp/cc-shot.png
+area=0
+output=""
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -a) area=1 ;;
+        -o) shift; output="$1" ;;
+        *)  out="$1" ;;
+    esac
+    shift
+done
+
+# Find a Wayland display that grim can actually talk to.
+works() { WAYLAND_DISPLAY="$1" grim - >/dev/null 2>&1; }
+disp="${WAYLAND_DISPLAY:-}"
+if [ -z "$disp" ] || ! works "$disp"; then
+    disp=""
+    for d in $(ls "/run/user/$uid"/wayland-[0-9]* 2>/dev/null \
+               | grep -oE 'wayland-[0-9]+' | sort -u); do
+        if works "$d"; then disp="$d"; break; fi
+    done
+fi
+[ -n "$disp" ] || { echo "ccshot: no working Wayland display found" >&2; exit 1; }
+export WAYLAND_DISPLAY="$disp"
+
+sock=$(ls "/run/user/$uid"/sway-ipc.* 2>/dev/null | head -1 || true)
+[ -n "$sock" ] && export SWAYSOCK="$sock"
+
+if [ "$area" = 1 ]; then
+    grim -g "$(slurp)" "$out"
+elif [ -n "$output" ]; then
+    grim -o "$output" "$out"
+else
+    grim "$out"
+fi
+
+echo "$out"
