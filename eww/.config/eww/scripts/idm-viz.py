@@ -92,7 +92,8 @@ def s_plasma(im, vals, st):
             sp[x, y] = hsv((v + 3) / 6.0, 1, energy)
     im.paste(small.resize((W, H)))
 
-STYLES = [s_mirror, s_radial, s_peak, s_scope, s_particles, s_plasma]
+# plasma dropped — heaviest (per-pixel trig each frame). 5 light styles left.
+STYLES = [s_mirror, s_radial, s_peak, s_scope, s_particles]
 
 
 def default_monitor():
