@@ -9,8 +9,15 @@ command -v cava >/dev/null || { echo "[0,0,0,0,0,0,0,0,0,0,0,0]"; exit 0; }
 # cava raw ascii prints "50;30;80;...;" per frame; convert to "[50,30,80,...]".
 # Strip everything but digits/';' first — cava prints a terminal-title escape and
 # shader chatter at startup that would otherwise corrupt the first JSON lines.
-stdbuf -oL cava -p "$CONF" 2>/dev/null | while IFS= read -r line; do
-    clean="$(printf '%s' "$line" | tr -cd '0-9;')"
-    [ -n "$clean" ] || continue
-    printf '[%s]\n' "$(printf '%s' "${clean%;}" | tr ';' ',')"
+# Loop forever: if cava exits (e.g. the sink monitor briefly disappears when the
+# default output changes), emit a flat frame and restart it after 1s — keeps the
+# eww deflisten fed instead of the visualizer going permanently dead.
+while :; do
+    stdbuf -oL cava -p "$CONF" 2>/dev/null | while IFS= read -r line; do
+        clean="$(printf '%s' "$line" | tr -cd '0-9;')"
+        [ -n "$clean" ] || continue
+        printf '[%s]\n' "$(printf '%s' "${clean%;}" | tr ';' ',')"
+    done
+    echo "[0,0,0,0,0,0,0,0,0,0,0,0]"
+    sleep 1
 done
