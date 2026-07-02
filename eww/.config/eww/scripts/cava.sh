@@ -1,23 +1,39 @@
 #!/usr/bin/env bash
 # Feed live cava bar values to eww as a JSON array, one line per frame.
-# eww `deflisten` runs this; each line updates the EQ bars. When nothing is
-# playing, cava emits zeros → flat bars (a real, audio-reactive visualizer).
-CONF="$(dirname "$(readlink -f "$0")")/../cava.conf"
+#
+# cava's `source = auto` binds to the default monitor only at startup, so it does
+# NOT follow later default-sink changes (route laptop -> Sonos and the bars would
+# freeze on the old, silent monitor). So we resolve the CURRENT default sink's
+# monitor explicitly and restart cava whenever the default changes. Also loops
+# forever so a transient monitor drop never kills the visualizer for good.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+BASE="$(dirname "$(readlink -f "$0")")/../cava.conf"
 
-command -v cava >/dev/null || { echo "[0,0,0,0,0,0,0,0,0,0,0,0]"; exit 0; }
+default_monitor() { printf '%s.monitor' "$(pactl get-default-sink 2>/dev/null)"; }
 
-# cava raw ascii prints "50;30;80;...;" per frame; convert to "[50,30,80,...]".
-# Strip everything but digits/';' first — cava prints a terminal-title escape and
-# shader chatter at startup that would otherwise corrupt the first JSON lines.
-# Loop forever: if cava exits (e.g. the sink monitor briefly disappears when the
-# default output changes), emit a flat frame and restart it after 1s — keeps the
-# eww deflisten fed instead of the visualizer going permanently dead.
 while :; do
-    stdbuf -oL cava -p "$CONF" 2>/dev/null | while IFS= read -r line; do
+    mon="$(default_monitor)"
+    conf="$(mktemp)"
+    # point cava at the current default monitor explicitly
+    sed "s|^source = .*|source = ${mon}|" "$BASE" > "$conf"
+
+    # cava -> JSON frames (strip cava's startup escape/shader noise)
+    stdbuf -oL cava -p "$conf" 2>/dev/null | while IFS= read -r line; do
         clean="$(printf '%s' "$line" | tr -cd '0-9;')"
         [ -n "$clean" ] || continue
         printf '[%s]\n' "$(printf '%s' "${clean%;}" | tr ';' ',')"
+    done &
+    cava_pipe=$!
+
+    # watch the default sink; if it changes, kill cava so the loop rebinds
+    while kill -0 "$cava_pipe" 2>/dev/null; do
+        sleep 1
+        [ "$(default_monitor)" != "$mon" ] && break
     done
+    pkill -f "cava -p ${conf}" 2>/dev/null   # only THIS cava (unique temp conf)
+    kill "$cava_pipe" 2>/dev/null
+    wait "$cava_pipe" 2>/dev/null
+    rm -f "$conf"
     echo "[0,0,0,0,0,0,0,0,0,0,0,0]"
-    sleep 1
+    sleep 0.3
 done

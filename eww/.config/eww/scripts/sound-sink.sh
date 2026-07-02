@@ -38,8 +38,7 @@ pactl set-default-sink "$sink"
 for si in $(pactl list short sink-inputs 2>/dev/null | awk '{print $1}'); do
     pactl move-sink-input "$si" "$sink" 2>/dev/null || true
 done
-# cava follows the new default: kill it — eww's deflisten respawns it on the new
-# sink's monitor.
-pkill -x cava 2>/dev/null || true
+# cava.sh polls the default sink and rebinds itself within ~1s, so no need to
+# kill it here (and we must not — that would also kill the iDotMatrix's cava).
 
 notify-send "Audio → $label" 2>/dev/null || true
