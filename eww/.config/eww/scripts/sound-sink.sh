@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Route system audio to a Sonos room (by NAME — survives re-pairing / IP changes)
-# or the laptop speaker, move any current streams, and keep the cava visualizer
-# following the active sink.
+# Route system audio to a Sonos room (by NAME) or the laptop speaker, move any
+# current streams, and keep the cava visualizer following the active sink.
 #   sound-sink.sh Den
 #   sound-sink.sh "Media Room"
 #   sound-sink.sh laptop
+#
+# Resolves the target from PipeWire's own sink list (raop sinks carry the room as
+# their Description), so it works even when the speaker's AirPlay mDNS ad lapses
+# (Sonos drops it when idle) — as long as the raop sink still exists.
 set -u
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
@@ -13,14 +16,11 @@ target="${1:-}"
 
 laptop_sink() { pactl list short sinks | awk '/HiFi__Speaker__sink/{print $2; exit}'; }
 
-# room name -> current AirPlay IP (via mDNS, so re-paired coordinators resolve) ->
-# the matching raop sink name.
+# room name (raop sink Description) -> raop sink Name
 sonos_sink() {
-    local room="$1" ip
-    ip="$(timeout 5 avahi-browse -rtp _airplay._tcp 2>/dev/null \
-        | awk -F';' -v r="$room" '$1=="=" && $3=="IPv4" { gsub(/\\032/," ",$4); if ($4==r) { print $8; exit } }')"
-    [ -n "$ip" ] || return 1
-    pactl list short sinks | awk -v ip="$ip" 'index($2, ip".7000") {print $2; exit}'
+    pactl list sinks 2>/dev/null | awk -v r="$1" '
+        /^[[:space:]]*Name: / { name=$2 }
+        /^[[:space:]]*Description: / { d=$0; sub(/^[[:space:]]*Description: /,"",d); if (d==r) { print name; exit } }'
 }
 
 case "$target" in
@@ -35,12 +35,11 @@ if [ -z "${sink:-}" ]; then
 fi
 
 pactl set-default-sink "$sink"
-# move any currently-playing streams onto the new sink
 for si in $(pactl list short sink-inputs 2>/dev/null | awk '{print $1}'); do
     pactl move-sink-input "$si" "$sink" 2>/dev/null || true
 done
-# cava follows the new default: kill it — eww's deflisten respawns it, and the
-# fresh cava (source=auto) binds to the new default sink's monitor.
+# cava follows the new default: kill it — eww's deflisten respawns it on the new
+# sink's monitor.
 pkill -x cava 2>/dev/null || true
 
 notify-send "Audio → $label" 2>/dev/null || true
