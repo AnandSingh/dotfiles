@@ -6,11 +6,11 @@
 set -u
 VENV="$HOME/.local/share/idotmatrix-venv"
 D="$(dirname "$(readlink -f "$0")")"
-APP="idm-nowplaying.py"
+APP="idm-viz.py"
 
-if pgrep -f "idm-nowplayin[g].py" >/dev/null; then
-    pkill -f "idm-nowplayin[g].py"
-    notify-send "iDotMatrix" "Now-playing stopped" 2>/dev/null || true
+if pgrep -f "idm-vi[z].py" >/dev/null; then
+    pkill -f "idm-vi[z].py"
+    notify-send "iDotMatrix" "Visualizer stopped" 2>/dev/null || true
     exit 0
 fi
 

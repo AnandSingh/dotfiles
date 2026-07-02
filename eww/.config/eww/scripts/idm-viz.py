@@ -34,6 +34,13 @@ def hsv(h, s, v):
 
 
 # ---- styles: each draws into a fresh PIL image from the 16 bin values (0..H) ----
+def s_bars(im, vals, st):  # the original simple bottom-up rainbow EQ (lightest)
+    px = im.load()
+    for i, v in enumerate(vals):
+        x = i * 2; c = COLS[i]
+        for y in range(max(0, H - v), H):
+            px[x, y] = c; px[x + 1, y] = c
+
 def s_mirror(im, vals, st):
     px = im.load()
     for i, v in enumerate(vals):
@@ -92,8 +99,9 @@ def s_plasma(im, vals, st):
             sp[x, y] = hsv((v + 3) / 6.0, 1, energy)
     im.paste(small.resize((W, H)))
 
-# plasma dropped — heaviest (per-pixel trig each frame). 5 light styles left.
-STYLES = [s_mirror, s_radial, s_peak, s_scope, s_particles]
+# Just the simple bottom-up bars — the version that ran smooth on the matrix.
+# (Other styles kept above for the ESP32 TC001 route where fps isn't BLE-bound.)
+STYLES = [s_bars]
 
 
 def default_monitor():
