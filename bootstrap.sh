@@ -503,6 +503,18 @@ install_hud_tools() {
 
     # cava drives the audio-reactive EQ bars (reads the PipeWire output monitor).
     command -v cava >/dev/null 2>&1 || sudo dnf install -y cava >/dev/null 2>&1 || true
+
+    # iDotMatrix BLE visualizer: the `idotmatrix` lib isn't packaged, so use a venv.
+    # Optional add-on ($mod+Shift+m pushes the EQ to a 32x32 iDotMatrix over BLE).
+    local idm_venv="$HOME/.local/share/idotmatrix-venv"
+    if [ ! -x "$idm_venv/bin/python" ]; then
+        log_info "Creating iDotMatrix venv (idotmatrix + pillow)..."
+        python3 -m venv "$idm_venv" \
+            && "$idm_venv/bin/pip" install -q --upgrade pip >/dev/null 2>&1 \
+            && "$idm_venv/bin/pip" install -q idotmatrix pillow >/dev/null 2>&1 \
+            && log_info "iDotMatrix venv ready." \
+            || log_warn "iDotMatrix venv setup failed (optional; skip if you don't have the device)."
+    fi
 }
 
 # Main installation flow
