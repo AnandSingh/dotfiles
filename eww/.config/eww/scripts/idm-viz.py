@@ -20,7 +20,7 @@ from idotmatrix import ConnectionManager, Image, FullscreenColor
 
 MAC = os.environ.get("IDM_MAC", "51:A3:BC:97:69:68")
 BARS, W, H = 16, 32, 32
-ROTATE_SEC = 18
+ROTATE_SEC = 20
 BASE_CONF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "idm-cava.conf")
 FRAME = os.path.join(tempfile.gettempdir(), "idm-frame.png")
 COLS = [tuple(int(c * 255) for c in colorsys.hsv_to_rgb((i / BARS) * 0.82, 1, 1)) for i in range(BARS)]
@@ -81,13 +81,16 @@ def s_particles(im, vals, st):
     st["p"] = alive[-120:]
 
 def s_plasma(im, vals, st):
-    px = im.load(); st["ph"] = st.get("ph", 0.0) + 0.05 + (sum(vals) / (BARS * H)) * 0.9
+    # render at 16x16 (256 px) then upscale — 4x cheaper than full 32x32 in pure Python
+    st["ph"] = st.get("ph", 0.0) + 0.05 + (sum(vals) / (BARS * H)) * 0.9
     ph = st["ph"]; energy = min(1.0, 0.25 + sum(vals) / (BARS * H))
-    for y in range(H):
-        for x in range(W):
-            v = (math.sin(x / 4.0 + ph) + math.sin(y / 4.0 + ph * 1.3)
-                 + math.sin((x + y) / 6.0 + ph * 0.7))
-            px[x, y] = hsv((v + 3) / 6.0, 1, energy)
+    small = PImage.new("RGB", (16, 16)); sp = small.load()
+    for y in range(16):
+        for x in range(16):
+            v = (math.sin(x / 2.0 + ph) + math.sin(y / 2.0 + ph * 1.3)
+                 + math.sin((x + y) / 3.0 + ph * 0.7))
+            sp[x, y] = hsv((v + 3) / 6.0, 1, energy)
+    im.paste(small.resize((W, H)))
 
 STYLES = [s_mirror, s_radial, s_peak, s_scope, s_particles, s_plasma]
 
@@ -131,7 +134,9 @@ async def feed(img):
             im = PImage.new("RGB", (W, H))
             STYLES[idx](im, vals, st)
             im.save(FRAME, format="PNG")
-            await img.uploadProcessed(FRAME, pixel_size=32)
+            # cap each BLE push so a hiccup can't freeze the whole visualizer
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(img.uploadProcessed(FRAME, pixel_size=32), timeout=1.5)
     finally:
         proc.terminate()
         with contextlib.suppress(Exception):
