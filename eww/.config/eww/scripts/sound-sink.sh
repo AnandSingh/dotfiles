@@ -23,10 +23,12 @@ sonos_sink() {  # room (raop sink Description) -> raop sink Name
         /^[[:space:]]*Description: / { d=$0; sub(/^[[:space:]]*Description: /,"",d); if (d==r) { print name; exit } }'
 }
 
-# tear down any existing viz_tap loopback (used only for Sonos targets)
+# tear down any existing viz_tap loopback (used only for Sonos targets).
+# NB: `pactl list modules` prints "Module #29" → strip the '#' or unload fails.
 drop_loopbacks() {
     for m in $(pactl list modules 2>/dev/null | awk -v t="$TAP" '
-        /Module #/ { id=$2 } /Argument:/ { if (index($0, "source="t".monitor")) print id }'); do
+        /^Module #/ { id=$2; gsub(/#/,"",id) }
+        /Argument:/ { if (index($0, "source="t".monitor")) print id }'); do
         pactl unload-module "$m" 2>/dev/null || true
     done
 }
@@ -54,12 +56,13 @@ case "$target" in
         pactl load-module module-loopback source="${TAP}.monitor" sink="$real" \
             latency_msec=120 sink_input_properties="media.name=viz_tap_loopback" >/dev/null
         pactl set-default-sink "$TAP"
-        # move app streams to the tap, but NOT the loopback's own stream (would loop)
-        lb_si="$(pactl list sink-inputs 2>/dev/null | awk '
-            /Sink Input #/ { id=$3; gsub(/#/,"",id) }
-            /media.name = "viz_tap_loopback"/ { print id }')"
+        # move app streams to the tap, but NEVER a viz_tap_loopback stream (that would
+        # feed the tap into itself). Collect all loopback sink-input ids and skip them.
+        lb_ids=" $(pactl list sink-inputs 2>/dev/null | awk '
+            /^Sink Input #/ { id=$3; gsub(/#/,"",id) }
+            /media.name = "viz_tap_loopback"/ { print id }' | tr "\n" " ") "
         for si in $(pactl list short sink-inputs 2>/dev/null | awk '{print $1}'); do
-            [ "$si" = "$lb_si" ] && continue
+            case "$lb_ids" in *" $si "*) continue ;; esac
             pactl move-sink-input "$si" "$TAP" 2>/dev/null || true
         done
         ;;

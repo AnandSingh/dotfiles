@@ -9,7 +9,7 @@ Needs the idotmatrix venv (see bootstrap install_hud_tools). Device address via
 $IDM_MAC or the default below. The matrix must NOT be connected to its phone app
 (BLE allows one link at a time).
 """
-import asyncio, subprocess, io, colorsys, os, sys
+import asyncio, subprocess, colorsys, os, sys, tempfile
 from PIL import Image as PImage
 from idotmatrix import ConnectionManager, Image
 
@@ -17,6 +17,8 @@ MAC = os.environ.get("IDM_MAC", "51:A3:BC:97:69:68")
 BARS, W, H = 16, 32, 32
 CONF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "idm-cava.conf")
 COLS = [tuple(int(c * 255) for c in colorsys.hsv_to_rgb((i / BARS) * 0.82, 1, 1)) for i in range(BARS)]
+# uploadProcessed takes a FILE PATH (not a buffer) — overwrite one temp PNG per frame.
+FRAME = os.path.join(tempfile.gettempdir(), "idm-frame.png")
 
 
 def render(vals):
@@ -52,14 +54,8 @@ async def run_once():
                 vals = [int(x) for x in clean.split(";")]
             except ValueError:
                 continue
-            buf = io.BytesIO()
-            render(vals).save(buf, format="PNG")
-            buf.seek(0)
-            try:
-                await img.uploadProcessed(buf, pixel_size=32)
-            except TypeError:
-                buf.seek(0)
-                await img.uploadProcessed(buf)
+            render(vals).save(FRAME, format="PNG")
+            await img.uploadProcessed(FRAME, pixel_size=32)
     finally:
         proc.terminate()
         try:
