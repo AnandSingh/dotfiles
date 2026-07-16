@@ -58,6 +58,8 @@ Open this file anytime with **`Super+Shift+/`**.
 |------|--------|
 | `Super+Shift+-` | Move window to scratchpad |
 | `Super+-` | Show / cycle scratchpad |
+| `Super+N` | Toggle developer Markdown notes |
+| `Super+Shift+N` | Toggle notification center |
 
 ## Workspaces
 | Keys | Action |

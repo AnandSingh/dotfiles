@@ -94,6 +94,9 @@ bindsym $mod+e exec $filemanager
 # Dropdown terminal — rolls down from top, toggle with $mod+grave
 bindsym $mod+grave exec swaymsg '[app_id="dropdown"]' scratchpad show || exec $term --class dropdown -o shell=zsh
 
+# Developer notes — persistent Markdown scratchpad
+bindsym $mod+n exec swaymsg '[app_id="org.gnome.gitlab.somas.Apostrophe"]' scratchpad show || exec ~/.config/sway/scripts/dev-notes.sh
+
 # ==================== Key Bindings — Window ====================
 
 # Alt+Tab to cycle windows (familiar from GNOME/Windows)
@@ -207,8 +210,8 @@ bindsym XF86AudioPlay exec playerctl play-pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
-# Notification center
-bindsym $mod+n exec swaync-client -t -sw
+# Notification center (Super+n is reserved for developer notes)
+bindsym $mod+Shift+n exec swaync-client -t -sw
 
 # ==================== Window Rules ====================
 
@@ -237,6 +240,16 @@ for_window [class="Google Chat"] focus
 for_window [app_id="dropdown"] {
     floating enable
     resize set 50 ppt 40 ppt
+    move position center
+    border pixel 2
+    move to scratchpad
+    scratchpad show
+}
+
+# Developer notes — a larger floating pad, toggled with $mod+n
+for_window [app_id="org.gnome.gitlab.somas.Apostrophe"] {
+    floating enable
+    resize set 65 ppt 65 ppt
     move position center
     border pixel 2
     move to scratchpad
