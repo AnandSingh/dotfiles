@@ -1,0 +1,13 @@
+#!/bin/bash
+# ws-launch <num>: focus workspace; if it has no windows, launch its assigned app.
+ws=$1
+case $ws in
+  8) cmd=(kitty --title devserver-main -e et devserver-aks -c 'tmux new -As main') ;;
+  9) cmd=(flatpak run com.moonlight_stream.Moonlight) ;;
+  *) swaymsg "workspace number $ws"; exit 0 ;;
+esac
+swaymsg "workspace number $ws"
+rep=$(swaymsg -t get_workspaces | jq -r ".[] | select(.num==$ws) | .representation")
+if [ -z "$rep" ] || [ "$rep" = "null" ]; then
+  setsid "${cmd[@]}" >/dev/null 2>&1 &
+fi
