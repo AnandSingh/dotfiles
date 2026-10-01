@@ -1,13 +1,22 @@
-#!/bin/bash
-# ws-launch <num>: focus workspace; if it has no windows, launch its assigned app.
-ws=$1
-case $ws in
-  8) cmd=(kitty --title devserver-main -e et devserver-aks -c 'tmux new -As main') ;;
-  9) cmd=(flatpak run com.moonlight_stream.Moonlight) ;;
-  *) swaymsg "workspace number $ws"; exit 0 ;;
+#!/usr/bin/env bash
+# Focus a workspace and lazily start its assigned app when it has no windows.
+set -euo pipefail
+
+ws=${1:?usage: ws-launch WORKSPACE}
+case "$ws" in
+    2) cmd=("$HOME/.local/bin/remote-tmux-kitty" devserver-aks kitty-plain "Devserver AKS") ;;
+    3) cmd=("$HOME/.local/bin/telisky-ai-codex-workspace") ;;
+    *) exec swaymsg "workspace number $ws" ;;
 esac
-swaymsg "workspace number $ws"
-rep=$(swaymsg -t get_workspaces | jq -r ".[] | select(.num==$ws) | .representation")
-if [ -z "$rep" ] || [ "$rep" = "null" ]; then
-  setsid "${cmd[@]}" >/dev/null 2>&1 &
+
+swaymsg "workspace number $ws" >/dev/null
+windows=$(swaymsg -t get_tree --raw | jq --argjson ws "$ws" '
+    [.. | objects
+      | select(.type? == "workspace" and .num? == $ws)
+      | (((.nodes // []) | length) + ((.floating_nodes // []) | length))]
+    | add // 0
+')
+
+if (( windows == 0 )); then
+    setsid "${cmd[@]}" >/dev/null 2>&1 &
 fi

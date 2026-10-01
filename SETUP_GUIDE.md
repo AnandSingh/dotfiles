@@ -70,7 +70,7 @@ This pulls latest changes, installs any new packages, and re-stows configs.
 | **System** | btop, dust, duf |
 | **Docs** | tldr |
 | **JSON** | jq |
-| **Sway desktop** (Linux) | sway, waybar, rofi/wofi/fuzzel, mako, swaylock/swayidle, grim/slurp, wl-clipboard, kitty, thunar, brightnessctl, pavucontrol, polkit-gnome, fonts |
+| **Sway desktop** (Linux) | sway, waybar, rofi/wofi/fuzzel, SwayNC (Mako fallback), swaylock/swayidle, grim/slurp, wl-clipboard, kitty, thunar, brightnessctl, pavucontrol, polkit-gnome, fonts |
 
 > GPU drivers are **not** installed by bootstrap (host-specific). On NVIDIA hosts run `nvidia-sway/install-nvidia-driver.sh` then `install-nvidia-session.sh` — see [nvidia-sway/README.md](nvidia-sway/README.md).
 

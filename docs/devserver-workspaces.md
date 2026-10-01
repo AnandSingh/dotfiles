@@ -1,32 +1,19 @@
-# devserver workspaces (ws8 terminal / ws9 desktop stream)
+# devserver workspace
 
-The laptop acts as a window into `devserver-aks` (the Fedora desktop PC):
+The laptop uses workspace 2 as the persistent terminal view into `devserver-aks`.
 
-| Workspace | App | What it is |
+| Workspace | App | Purpose |
 |---|---|---|
-| 8 | kitty → `et devserver-aks -c "tmux new -As main"` | Persistent PC terminal. Eternal Terminal survives wifi drops/roaming; tmux session `main` survives everything else. |
-| 9 | Moonlight (flatpak) | Full PC desktop streamed from Sunshine (VAAPI hardware encode) on the ultrawide. |
+| 2 | `kitty-plain` → `remote-tmux-kitty` | One Kitty tab per remote tmux session on `devserver-aks`. |
 
-## Pieces
+The portable Sway config starts it lazily on the first `Super+2` press:
 
-- **`bin/.local/bin/ws-launch <num>`** — focuses the workspace; if it has no
-  windows, relaunches its assigned app. Bound to `$mod+8` / `$mod+9`.
-- **Machine config** (git-ignored `sway/.config/sway/config.d/local.conf` on the
-  laptop) carries the autostart + assigns + bindings:
-
-```
-assign [title="^devserver-main$"] workspace number 8
-assign [app_id="com.moonlight_stream.Moonlight"] workspace number 9
-exec kitty --title devserver-main -e et devserver-aks -c 'tmux new -As main'
-exec flatpak run com.moonlight_stream.Moonlight
-bindsym $mod+8 exec ~/.local/bin/ws-launch 8
-bindsym $mod+9 exec ~/.local/bin/ws-launch 9
+```sway
+bindsym $mod+2 exec ~/.local/bin/ws-launch 2
+assign [app_id="kitty-plain"] workspace number 2
 ```
 
-## Host side (devserver-aks)
+`ws-launch` invokes `remote-tmux-kitty` only when workspace 2 has no windows.
 
-- Sunshine runs as a user service (`~/.config/systemd/user/sunshine.service`,
-  WantedBy=graphical-session.target), web UI :47990, VAAPI encoders via RPM
-  Fusion `intel-media-driver`.
-- `et.service` (Eternal Terminal server) enabled, port 2022 open in firewalld.
-- tmux with resurrect + continuum keeps the `main` session alive across reboots.
+The host-side tmux sessions persist independently of the laptop display session.
+Moonlight is no longer installed or launched by this laptop configuration.

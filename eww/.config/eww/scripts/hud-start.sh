@@ -4,7 +4,7 @@
 # login (exec) AND on demand ($mod+Shift+g) after docking mid-session.
 set -u
 
-MODEL="DELL P3222QE"
+MODEL="DELL U4025QW"
 D="$(dirname "$(readlink -f "$0")")"
 
 # --- self-detect sway socket ---
@@ -26,8 +26,10 @@ conn="$(echo "$outputs" | jq -r --arg m "$MODEL" '.[]|select(.model==$m)|.name' 
 [ -n "$conn" ] || exit 0
 
 # --- reserve the top third (720px) on Dell workspaces (ergonomic gap) — idempotent ---
+# Preserve focus instead of unexpectedly sending the operator to workspace 1.
+current_ws=$(swaymsg -t get_workspaces --raw | jq -r '.[] | select(.focused).name')
 for n in 6 7 8 9; do swaymsg "workspace number $n; gaps top current set 720" >/dev/null; done
-swaymsg "workspace number 1" >/dev/null
+[ -n "$current_ws" ] && swaymsg "workspace $current_ws" >/dev/null
 
 # --- eww overlay (idempotent) ---
 # Backend: eww-x11. eww-wayland renders BLANK on this NVIDIA box (GTK/EGL layer-shell).

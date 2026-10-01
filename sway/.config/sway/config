@@ -39,8 +39,8 @@ gaps outer 2
 smart_gaps on
 smart_borders on
 
-# Focus the window under the cursor automatically
-focus_follows_mouse yes
+# Keep keyboard focus stable on large displays; focus changes only by click or key.
+focus_follows_mouse no
 
 # class                 border  bg      text    indicator child_border
 client.focused          #89b4fa #1e1e2e #cdd6f4 #89b4fa   #89b4fa
@@ -52,34 +52,30 @@ font pango:JetBrainsMono Nerd Font 10
 
 # ==================== Autostart ====================
 
-exec_always --no-startup-id {
+exec --no-startup-id {
     gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
     gsettings set org.gnome.desktop.interface icon-theme 'Adwaita'
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 }
 
+# Portals are D-Bus/systemd activated. Starting them manually races their service
+# lifecycle and can leave stale instances after a compositor restart.
 exec {
-    /usr/libexec/xdg-desktop-portal-wlr
-    /usr/libexec/xdg-desktop-portal-gtk
-    /usr/libexec/xdg-desktop-portal
     waybar
-    swaync
     nm-applet --indicator
     wl-paste --type text --watch cliphist store
     wl-paste --type image --watch cliphist store
-    swww-daemon --format xrgb
-    sleep 1 && swww img ~/Pictures/wallpapers/catppuccin-geometric.png --transition-type fade --transition-duration 1
+    # No inactivity timeout: keep manual locking and lock before real sleep.
     swayidle -w \
-        timeout 300 '$lock' \
-        timeout 600 'swaymsg "output * power off"' \
-        resume 'swaymsg "output * power on"' \
-        before-sleep '$lock'
+        before-sleep '$lock' \
+        after-resume '~/.config/sway/scripts/lid-sync.sh'
 }
 
 # Autostart apps on login
-# Workspace 1 terminal: telisky-tmux dev session on Ubuntu, plain tmux elsewhere.
-exec swaymsg "workspace 1; exec $term -e sh -c 'if grep -qi ubuntu /etc/os-release 2>/dev/null && [ -x \"$HOME/.local/bin/telisky-tmux\" ]; then exec \"$HOME/.local/bin/telisky-tmux\"; else exec tmux new-session -A -s main; fi'"
-exec swaymsg "workspace 2; exec $browser"
+# Workspace 1: Telisky task-worktree tmux session on every Linux workstation.
+exec swaymsg "workspace 1; exec $term -e sh -c 'if [ -x \"$HOME/.local/bin/telisky-tmux\" ]; then exec \"$HOME/.local/bin/telisky-tmux\"; else exec tmux new-session -A -s main; fi'"
+# Remote workspaces 2 and 3 launch on first visit through ws-launch instead of
+# creating network sessions at every login.
 # exec swaymsg "workspace 7; exec $browser --new-window --app=https://chat.google.com"  # disabled: Google Chat autostart removed
 exec ~/.config/sway/scripts/dropdown-autohide.sh
 
@@ -90,12 +86,14 @@ bindsym $mod+t exec swaymsg '[app_id="kitty"]' focus || exec $term
 bindsym $mod+space exec $menu
 bindsym $mod+b exec $browser --new-window
 bindsym $mod+e exec $filemanager
+# Nexus Deck — dedicated terminal; opens or focuses without disturbing current tmux
+bindsym $mod+d exec ~/.local/bin/nexusctl dashboard --new-terminal
 
 # Dropdown terminal — rolls down from top, toggle with $mod+grave
 bindsym $mod+grave exec swaymsg '[app_id="dropdown"]' scratchpad show || exec $term --class dropdown -o shell=zsh
 
-# Developer notes — persistent Markdown scratchpad
-bindsym $mod+n exec swaymsg '[app_id="org.gnome.gitlab.somas.Apostrophe"]' scratchpad show || exec ~/.config/sway/scripts/dev-notes.sh
+# Developer notes — jump to Zettlr; press again to return to the prior workspace
+bindsym $mod+n exec ~/.config/sway/scripts/notes-workspace.sh
 
 # ==================== Key Bindings — Window ====================
 
@@ -144,8 +142,8 @@ floating_modifier $mod normal
 # ==================== Workspaces ====================
 
 bindsym $mod+1 workspace number 1
-bindsym $mod+2 workspace number 2
-bindsym $mod+3 workspace number 3
+bindsym $mod+2 exec ~/.local/bin/ws-launch 2
+bindsym $mod+3 exec ~/.local/bin/ws-launch 3
 bindsym $mod+4 workspace number 4
 bindsym $mod+5 workspace number 5
 bindsym $mod+6 workspace number 6
@@ -178,6 +176,7 @@ bindsym $mod+Shift+r reload
 bindsym $mod+F1 exec ~/.config/sway/scripts/keybinding-help.sh
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit Sway?' -B 'Yes' 'swaymsg exit'
 bindsym Control+Alt+l exec $lock
+bindsym $mod+Shift+x exec $lock
 bindsym Control+Alt+Delete exec ~/.config/sway/scripts/power-menu.sh
 
 # Screenshots
@@ -193,6 +192,8 @@ bindsym $mod+Ctrl+p exec swaymsg -t get_tree | jq -r '.. | select(.focused?) | .
 
 # Clipboard manager
 bindsym $mod+Alt+v exec cliphist list | rofi -dmenu -p "Clipboard" | cliphist decode | wl-copy
+# Upload a clipboard image to both personal servers and copy one shared @path.
+bindsym $mod+Shift+v exec ~/.local/bin/remote-clipboard
 
 # Emoji picker (copies selection to clipboard)
 bindsym $mod+period exec ~/.config/sway/scripts/emoji-picker.sh
@@ -216,21 +217,28 @@ bindsym $mod+Shift+n exec swaync-client -t -sw
 # ==================== Window Rules ====================
 
 # Auto-assign apps to workspaces and focus on open
-assign [app_id="google-chrome"] workspace number 2
-assign [class="Google-chrome"] workspace number 2
-assign [class="Code"] workspace number 3
-assign [class="code-fb"] workspace number 3
+assign [app_id="kitty"] workspace number 1
+assign [app_id="kitty-plain"] workspace number 2
+assign [app_id="kitty-telisky-ai"] workspace number 3
+assign [app_id="google-chrome"] workspace number 7
+assign [class="Google-chrome"] workspace number 7
+assign [app_id="code"] workspace number 5
+assign [class="Code"] workspace number 5
+assign [class="code-fb"] workspace number 5
 assign [app_id="thunar"] workspace number 4
+assign [app_id="Zettlr"] workspace number 8
 assign [class="Google Chat"] workspace number 7
 assign [title="Google Chat"] workspace number 7
 
-# Chrome profiles open tabbed instead of side-by-side
-for_window [app_id="google-chrome"] layout tabbed
-for_window [class="Google-chrome"] layout tabbed
+# Enforce the dedicated terminal workspaces after Kitty publishes its Wayland app ID.
+for_window [app_id="kitty-plain"] move container to workspace number 2
+for_window [app_id="kitty-telisky-ai"] move container to workspace number 3
+
+# Browser windows tile side-by-side, which uses an ultrawide efficiently.
+for_window [app_id="google-chrome"] layout splith
+for_window [class="Google-chrome"] layout splith
 
 # Auto-focus workspace when assigned app opens
-for_window [app_id="google-chrome"] focus
-for_window [class="Google-chrome"] focus
 for_window [class="Code"] focus
 for_window [class="code-fb"] focus
 for_window [app_id="thunar"] focus
@@ -240,16 +248,6 @@ for_window [class="Google Chat"] focus
 for_window [app_id="dropdown"] {
     floating enable
     resize set 50 ppt 40 ppt
-    move position center
-    border pixel 2
-    move to scratchpad
-    scratchpad show
-}
-
-# Developer notes — a larger floating pad, toggled with $mod+n
-for_window [app_id="org.gnome.gitlab.somas.Apostrophe"] {
-    floating enable
-    resize set 65 ppt 65 ppt
     move position center
     border pixel 2
     move to scratchpad

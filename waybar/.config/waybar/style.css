@@ -92,6 +92,18 @@ tooltip label {
     color: #f38ba8;
 }
 
+#custom-kvm {
+    color: #fab387;
+    background: rgba(250, 179, 135, 0.10);
+    padding: 0 10px;
+    font-weight: 700;
+}
+
+#custom-kvm:hover {
+    color: #1e1e2e;
+    background: #fab387;
+}
+
 #custom-twingate {
     padding: 0 8px;
 }

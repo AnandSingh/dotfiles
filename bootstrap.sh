@@ -205,7 +205,7 @@ install_sway_desktop() {
             log_info "Installing Sway desktop environment + companions..."
             sudo dnf install -y \
                 sway swaybg swayidle swaylock \
-                waybar rofi wofi fuzzel mako \
+                waybar rofi wofi fuzzel SwayNotificationCenter \
                 grim slurp wl-clipboard \
                 kitty thunar \
                 brightnessctl playerctl pavucontrol \
@@ -213,8 +213,9 @@ install_sway_desktop() {
                 mate-polkit xdg-desktop-portal-wlr \
                 jetbrains-mono-fonts fontawesome-fonts-all google-noto-emoji-fonts \
                 || log_warn "Some Sway packages failed to install; review the output above."
-            # swww (animated wallpaper) isn't always packaged — optional.
-            sudo dnf install -y swww 2>/dev/null || log_warn "swww not in repos; wallpaper exec stays optional."
+            systemctl --user mask mako.service 2>/dev/null || true
+            systemctl --user enable swaync.service 2>/dev/null \
+                || log_warn "Could not enable SwayNC; enable swaync.service after graphical login."
             ;;
         ubuntu)
             log_info "Installing Sway desktop environment + companions..."

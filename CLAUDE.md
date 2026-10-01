@@ -52,7 +52,7 @@ eza, fd-find, zoxide, git-delta, lazygit, fzf, ripgrep, bat, btop, tldr, dust, d
 ## Sway desktop installed via bootstrap (Linux)
 
 `install_sway_desktop()` installs the compositor + the apps the stowed configs
-launch: sway, swaybg/swayidle/swaylock, waybar, rofi/wofi/fuzzel, mako, grim,
+launch: sway, swaybg/swayidle/swaylock, waybar, rofi/wofi/fuzzel, SwayNC (Mako fallback), grim,
 slurp, wl-clipboard, kitty ($term), thunar ($filemanager), brightnessctl,
 playerctl, pavucontrol, polkit-gnome, xdg-desktop-portal-wlr, fonts. GPU drivers
 are NOT installed here (host-specific) — NVIDIA hosts run `nvidia-sway/install-nvidia-driver.sh`
@@ -76,8 +76,8 @@ All wired into zsh via aliases in `.zshrc`:
 - Primary WM, Wayland-only
 - `Super+Return` / `Super+t` — focus existing kitty or launch new
 - `` Super+` `` — toggle dropdown terminal (50% width, centered, 2px border, plain zsh, auto-hides on focus loss)
-- Chrome profiles open tabbed on workspace 2
-- Apps auto-focus their assigned workspace when opened
+- Chrome windows tile side-by-side on workspace 7
+- Selected GUI apps are routed to dedicated workspaces
 - Dropdown autohide script: `sway/scripts/dropdown-autohide.sh` (runs as sway IPC listener)
 
 ## Tmux details

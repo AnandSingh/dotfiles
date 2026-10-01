@@ -4,7 +4,7 @@
 # blank the art) instantly restores the current image. Cheap, no network.
 set -u
 
-MODEL="DELL P3222QE"
+MODEL="DELL U4025QW"
 CACHE="$HOME/.cache/dell-hud"
 
 if [ -z "${SWAYSOCK:-}" ] || [ ! -S "${SWAYSOCK:-}" ]; then

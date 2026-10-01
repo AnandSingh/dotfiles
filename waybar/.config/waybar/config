@@ -6,7 +6,7 @@
 
     "modules-left": ["custom/weather", "clock"],
     "modules-center": ["sway/workspaces", "sway/mode", "sway/scratchpad"],
-    "modules-right": ["idle_inhibitor", "cpu", "memory", "temperature", "pulseaudio", "network", "custom/twingate", "bluetooth", "battery", "tray", "custom/notification", "custom/power"],
+    "modules-right": ["custom/kvm", "idle_inhibitor", "cpu", "memory", "temperature", "pulseaudio", "network", "custom/twingate", "bluetooth", "battery", "tray", "custom/notification", "custom/power"],
 
     "sway/workspaces": {
         "disable-scroll": false,
@@ -71,6 +71,15 @@
         "exec": "curl -s 'https://wttr.in/?format=%c+%t' 2>/dev/null || echo ''",
         "tooltip-format": "{}",
         "exec-if": "ping -c1 -W2 wttr.in >/dev/null 2>&1"
+    },
+
+    "custom/kvm": {
+        "format": "{}",
+        "return-type": "json",
+        "exec": "~/.config/waybar/custom_modules/kvm-switch.sh status",
+        "interval": 3600,
+        "on-click": "~/.config/waybar/custom_modules/kvm-switch.sh switch",
+        "tooltip": true
     },
 
     "idle_inhibitor": {
