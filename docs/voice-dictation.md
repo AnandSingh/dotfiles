@@ -15,8 +15,10 @@ model locally.
 
 ## Current status
 
-Deployed on 2026-11-25. Hold `F10` to record and release it to transcribe and
-paste. Vocalinux starts as a user service, keeps no local speech model, and uses
+Deployed on 2026-11-25. Hold the microphone-mute media key (or `F10` as a
+fallback) and release it to transcribe and paste. Fn alone cannot be bound
+because keyboard firmware does not expose it to Linux. Vocalinux starts as a
+user service, keeps no local speech model, and uses
 the authenticated tailnet endpoint at
 `https://devserver-aks.tail82c154.ts.net/stt`.
 
@@ -101,7 +103,7 @@ https://devserver-aks.tail82c154.ts.net/stt/v1/audio/transcriptions
 Vocalinux `0.18.6` is installed from its checksum-verified Fedora RPM and runs
 as `vocalinux.service`. It uses `wtype`, keeps its overlay disabled to preserve
 focus, and stores its API key only in the mode-0600 machine-local config. Sway
-owns a repeat-safe `F10` press/release binding. Sound feedback is disabled; an
+owns repeat-safe mic-media-key and `F10` press/release bindings. Sound feedback is disabled; an
 animated Waybar waveform shows microphone startup, listening, and transcription.
 A user-owned compatibility overlay gives external D-Bus activation true
 push-to-talk semantics, enables Speaches hotwords and VAD, guards against
