@@ -77,7 +77,7 @@ All wired into zsh via aliases in `.zshrc`:
 - `` Super+` `` — toggle dropdown terminal (50% width, centered, 2px border, plain zsh, auto-hides on focus loss)
 - `Super+1…9` switches to a stable workspace and launches its profile app if missing there; it never steals windows from another workspace
 - `Super+Tab` searches globally; `Super+Shift+1…9` deliberately moves the focused window
-- Hold the mic-mute media key (or `F10`) to dictate through private `devserver-aks` Whisper; release to paste
+- Hold `F10` to dictate through the private `devserver-aks` Whisper endpoint; release to paste
 - GUI apps otherwise open on the currently focused workspace
 - Dropdown autohide script: `sway/scripts/dropdown-autohide.sh` (runs as sway IPC listener)
 

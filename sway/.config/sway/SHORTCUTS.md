@@ -9,8 +9,7 @@ machine's `config.d/local.conf`. Open the generated binding helper with `Super+F
 |---|---|
 | `Super+Return` / `Super+T` | Focus a Kitty window or launch Kitty |
 | `Super+Shift+Return` | Open/focus Ghostty connected to remote tmux `devserver` |
-| Hold mic-mute media key or `F10` | Record dictation; release to transcribe remotely and paste |
-| `Super` + mic-mute media key | Toggle microphone mute |
+| Hold `F10` | Record dictation; release to transcribe remotely and paste |
 | `Super+Space` | Rofi app/window/command launcher |
 | `Super+B` | Open a new Chrome window on the current workspace |
 | `Super+E` | Open Thunar on the current workspace |

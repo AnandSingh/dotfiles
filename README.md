@@ -29,7 +29,7 @@ This dotfiles repository uses [GNU Stow](https://www.gnu.org/software/stow/) for
 ### Linux Desktop (primary)
 - **Sway**: primary Wayland compositor, with Waybar and named workspaces
 - **Waybar**: status bar (right-click volume to pick an output; middle-click opens pavucontrol)
-- **Vocalinux**: one-key push-to-talk dictation through private GPU Whisper on `devserver-aks`
+- **Vocalinux**: hold-F10 dictation through private GPU Whisper on `devserver-aks`
 - Alternate i3/Hyprland and X11 Polybar/Picom configs are archived under `legacy/` and are not installed by default.
 - Additional compatibility configs: xprofile, xresources, volumeicon, screenz
 
