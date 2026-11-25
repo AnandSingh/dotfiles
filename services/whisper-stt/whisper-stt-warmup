@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+env_file="$HOME/.config/whisper-stt/env"
+key=$(sed -n 's/^API_KEY=//p' "$env_file")
+model=$(sed -n 's/^WHISPER_MODEL=//p' "$env_file")
+tmp=$(mktemp --suffix=.wav)
+trap 'rm -f "$tmp"' EXIT
+
+python3 - "$tmp" <<'PY'
+import math
+import struct
+import sys
+import wave
+
+rate = 16000
+with wave.open(sys.argv[1], "wb") as wav:
+    wav.setnchannels(1)
+    wav.setsampwidth(2)
+    wav.setframerate(rate)
+    frames = (int(1200 * math.sin(2 * math.pi * 220 * i / rate)) for i in range(rate // 2))
+    wav.writeframes(b"".join(struct.pack("<h", sample) for sample in frames))
+PY
+
+for _ in $(seq 1 180); do
+    if curl -fsS -H "Authorization: Bearer $key" \
+        http://127.0.0.1:8001/health >/dev/null 2>&1; then
+        break
+    fi
+    sleep 2
+done
+
+curl -fsS -H "Authorization: Bearer $key" \
+    -F "file=@$tmp;type=audio/wav" \
+    -F "model=$model" \
+    -F "language=en" \
+    -F "response_format=json" \
+    http://127.0.0.1:8001/v1/audio/transcriptions >/dev/null

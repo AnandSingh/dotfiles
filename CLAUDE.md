@@ -2,7 +2,7 @@
 
 ## What this repo is
 
-Personal dotfiles managed with GNU Stow on Fedora Linux (Wayland/Sway). Each top-level directory is a stow package — its contents get symlinked to `$HOME`.
+Personal dotfiles managed with GNU Stow on Fedora Linux (Wayland/Sway). Most top-level tool directories are Stow packages; `legacy/` holds archived configs and is never stowed.
 
 ## Architecture
 
@@ -15,18 +15,17 @@ dotfiles/
 ├── git/.gitconfig        # Git config — delta pager, side-by-side diffs, aliases
 ├── zsh/.zshrc            # Zsh — oh-my-zsh, p10k, aliases, tool integrations
 ├── tmux/.tmux.conf       # Tmux — prefix Ctrl+a, vim nav, resurrect+continuum auto-save
-├── kitty/.config/kitty/  # Kitty terminal — Catppuccin Mocha, auto-attach tmux
+├── ghostty/.config/ghostty/ # Ghostty — preferred remote-development terminal
+├── kitty/.config/kitty/  # Kitty fallback/local terminal — auto-attach tmux
 ├── sway/.config/sway/    # Sway WM — tiling, dropdown terminal, tabbed Chrome
 │   ├── config            # Main sway config
 │   └── scripts/          # Helper scripts (dropdown-autohide.sh)
-├── waybar/.config/waybar/# Waybar status bar
+├── waybar/.config/waybar/# Active Waybar status bar
+├── vocalinux/            # Systemd service for remote GPU push-to-talk dictation
 ├── nvim/                 # Neovim config
 ├── vim/                  # Vim config
-├── i3/                   # i3 WM (X11 fallback)
-├── hyprland/             # Hyprland compositor
-├── polybar/              # Polybar (X11)
-├── picom/                # Picom compositor (X11)
-└── .gitignore            # Ignores *.bak.* files
+├── legacy/               # Archived i3/Hyprland/X11 configs and Waybar backups
+└── .gitignore            # Ignores local/generated files
 ```
 
 ## Key conventions
@@ -35,14 +34,14 @@ dotfiles/
 - **Machine-specific config** goes in `~/.zshrc.local` (not tracked). Used for CUDA paths, local env vars.
 - **Sudoers**: `/etc/sudoers.d/nopasswd-safe` — passwordless sudo for dnf, systemctl, reboot, poweroff, mount, umount, dmesg, journalctl, nmap. Created by `bootstrap.sh`.
 - **Lazygit** is installed from COPR (`atim/lazygit`), not Fedora repos.
-- **Catppuccin Mocha** is the color theme across kitty, sway borders, and delta.
+- **Catppuccin Mocha** is the color theme across Ghostty, Kitty, Sway borders, and delta.
 
 ## When editing configs
 
 - After changing a stow package, run `stow -R <package>` to re-symlink, or `./install.sh restow` for all.
 - After changing `.zshrc`, user runs `source ~/.zshrc` or `src` alias.
 - After changing sway config, user presses `Super+Shift+r` to reload.
-- After changing kitty config, user restarts kitty.
+- After changing Ghostty or Kitty config, user restarts that terminal.
 - After changing tmux config, user runs `prefix+R` (Ctrl+a, then Shift+r).
 
 ## Dev tools installed via bootstrap
@@ -53,7 +52,7 @@ eza, fd-find, zoxide, git-delta, lazygit, fzf, ripgrep, bat, btop, tldr, dust, d
 
 `install_sway_desktop()` installs the compositor + the apps the stowed configs
 launch: sway, swaybg/swayidle/swaylock, waybar, rofi/wofi/fuzzel, SwayNC (Mako fallback), grim,
-slurp, wl-clipboard, kitty ($term), thunar ($filemanager), brightnessctl,
+slurp, wl-clipboard, Ghostty (remote workspace), Kitty ($term/fallback), Vocalinux (remote dictation), thunar ($filemanager), brightnessctl,
 playerctl, pavucontrol, polkit-gnome, xdg-desktop-portal-wlr, fonts. GPU drivers
 are NOT installed here (host-specific) — NVIDIA hosts run `nvidia-sway/install-nvidia-driver.sh`
 then `install-nvidia-session.sh` (see nvidia-sway/README.md).
@@ -73,11 +72,13 @@ All wired into zsh via aliases in `.zshrc`:
 
 ## Sway details
 
-- Primary WM, Wayland-only
+- Primary and supported WM, Wayland-only
 - `Super+Return` / `Super+t` — focus existing kitty or launch new
 - `` Super+` `` — toggle dropdown terminal (50% width, centered, 2px border, plain zsh, auto-hides on focus loss)
-- Chrome windows tile side-by-side on workspace 7
-- Selected GUI apps are routed to dedicated workspaces
+- `Super+1…9` switches to a stable workspace and launches its profile app if missing there; it never steals windows from another workspace
+- `Super+Tab` searches globally; `Super+Shift+1…9` deliberately moves the focused window
+- Hold `F10` to dictate through the private `devserver-aks` Whisper endpoint; release to paste
+- GUI apps otherwise open on the currently focused workspace
 - Dropdown autohide script: `sway/scripts/dropdown-autohide.sh` (runs as sway IPC listener)
 
 ## Tmux details
@@ -87,7 +88,8 @@ All wired into zsh via aliases in `.zshrc`:
 - Auto-save every 15 minutes (continuum)
 - Auto-restore on startup (continuum-restore)
 - Systemd service starts tmux server at login (`~/.config/systemd/user/tmux.service`)
-- Kitty auto-attaches to session `main` via `shell tmux new-session -A -s main`
+- Ghostty opens the browser-enabled `devserver-aks` `devserver` session on workspace 2
+- Kitty auto-attaches to the laptop's local `main` session via `shell tmux new-session -A -s main`
 
 ## Git details
 

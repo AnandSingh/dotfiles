@@ -236,6 +236,94 @@ install_sway_desktop() {
     esac
 }
 
+# Install Ghostty from the Fedora COPR linked by Ghostty's official Linux
+# package guide. Ghostty is the preferred laptop terminal for remote work;
+# Kitty remains installed as a fallback and for existing desktop integrations.
+install_ghostty() {
+    case "$OS" in
+        fedora)
+            command -v ghostty >/dev/null 2>&1 && return 0
+            log_info "Installing Ghostty from scottames/ghostty COPR..."
+            sudo dnf copr enable -y scottames/ghostty \
+                && sudo dnf install -y ghostty \
+                || log_warn "Ghostty installation failed; Kitty remains available."
+            ;;
+        *)
+            log_info "Ghostty auto-install is currently configured for Fedora only; skipping."
+            ;;
+    esac
+}
+
+# Ghostty does not synthesize Kitty's built-in Powerline glyphs. Install the
+# small Nerd Fonts symbols-only fallback used by the shared tmux status bar.
+install_nerd_font_symbols() {
+    if fc-list : family 2>/dev/null | grep -qi "Symbols Nerd Font"; then
+        return 0
+    fi
+
+    local font_dir="$HOME/.local/share/fonts/NerdFontsSymbolsOnly"
+    local tmp
+    tmp=$(mktemp -d)
+    log_info "Installing Nerd Fonts symbols fallback..."
+    mkdir -p "$font_dir"
+    if curl -fsSL \
+        https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/NerdFontsSymbolsOnly.zip \
+        -o "$tmp/font.zip" \
+        && unzip -jo "$tmp/font.zip" '*.ttf' -d "$font_dir" >/dev/null; then
+        fc-cache -f "$font_dir" >/dev/null
+        log_info "Installed Symbols Nerd Font Mono."
+    else
+        log_warn "Nerd Fonts symbols fallback installation failed."
+    fi
+    rm -rf "$tmp"
+}
+
+# Install the Sway-friendly desktop dictation client. Version 0.18.6 does not
+# yet send its custom dictionary to remote OpenAI-compatible transcription
+# servers, so backport the small upstream prompt-field fix after installation.
+install_vocalinux() {
+    case "$OS" in
+        fedora)
+            local version="0.18.6"
+            local rpm_name="vocalinux-${version}-1.x86_64.rpm"
+            local rpm_url="https://github.com/VocaHQ/vocalinux/releases/download/v${version}/${rpm_name}"
+            local rpm_sha="b1058b9b848181d7becfa7171335520f718f280ffcba80002270d0abecff8a34"
+            local tmp repo_dir overlay_installer
+
+            if ! rpm -q vocalinux >/dev/null 2>&1; then
+                tmp=$(mktemp -d)
+                log_info "Installing Vocalinux ${version}..."
+                if curl -fsSL "$rpm_url" -o "$tmp/$rpm_name" \
+                    && echo "$rpm_sha  $tmp/$rpm_name" | sha256sum -c - \
+                    && sudo dnf install -y "$tmp/$rpm_name"; then
+                    log_info "Installed Vocalinux ${version}."
+                else
+                    log_warn "Vocalinux installation failed."
+                    rm -rf "$tmp"
+                    return 0
+                fi
+                rm -rf "$tmp"
+            fi
+
+            if ! rpm -q python3-onnxruntime >/dev/null 2>&1; then
+                log_info "Installing neural voice activity detection support..."
+                sudo dnf install -y --setopt=install_weak_deps=False python3-onnxruntime
+            fi
+
+            repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+            overlay_installer="$repo_dir/vocalinux/.local/bin/vocalinux-install-overlay"
+            if [[ -x "$overlay_installer" ]] && "$overlay_installer"; then
+                log_info "Enabled Vocalinux push-to-talk and Speaches compatibility overlay."
+            else
+                log_warn "Could not install the Vocalinux compatibility overlay."
+            fi
+            ;;
+        *)
+            log_info "Vocalinux auto-install is currently configured for Fedora only; skipping."
+            ;;
+    esac
+}
+
 # Install Oh My Zsh
 install_oh_my_zsh() {
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -518,6 +606,11 @@ main() {
     echo
 
     install_sway_desktop
+    echo
+
+    install_ghostty
+    install_nerd_font_symbols
+    install_vocalinux
     echo
 
     setup_sudoers

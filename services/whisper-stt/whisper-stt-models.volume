@@ -1,0 +1,5 @@
+[Unit]
+Description=Persistent model cache for Whisper STT
+
+[Volume]
+VolumeName=whisper-stt-models

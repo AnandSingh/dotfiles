@@ -30,6 +30,19 @@ set $filemanager thunar
 set $menu rofi -show drun -modi drun,run,window
 set $lock swaylock -f
 
+# Workspace labels kept as documentation. Commands below use numeric workspaces
+# for maximum compatibility with helper scripts and existing sessions.
+set $ws1 "1:term"
+set $ws2 "2:remote"
+set $ws3 "3:ai"
+set $ws4 "4:files"
+set $ws5 "5:code"
+set $ws6 "6:ops"
+set $ws7 "7:web"
+set $ws8 "8:notes"
+set $ws9 "9:flex"
+set $ws10 "10:flex"
+
 # ==================== Appearance ====================
 
 default_border pixel 2
@@ -82,10 +95,18 @@ exec ~/.config/sway/scripts/dropdown-autohide.sh
 # ==================== Key Bindings — Apps ====================
 
 bindsym $mod+Return exec swaymsg '[app_id="kitty"]' focus || exec $term
+# Dedicated remote development terminal (Ghostty, with Kitty fallback).
+bindsym $mod+Shift+Return exec ~/.local/bin/workspace open remote
 bindsym $mod+t exec swaymsg '[app_id="kitty"]' focus || exec $term
 bindsym $mod+space exec $menu
 bindsym $mod+b exec $browser --new-window
 bindsym $mod+e exec $filemanager
+
+# Wispr Flow-style dictation: hold F10 to record, release to transcribe and paste.
+# Vocalinux delegates inference to the private devserver-aks Speaches endpoint.
+bindsym --no-warn --locked F10 exec ~/.local/bin/vocalinux-ptt start
+bindsym --no-warn --locked --release F10 exec ~/.local/bin/vocalinux-ptt stop
+
 # Nexus Deck — dedicated terminal; opens or focuses without disturbing current tmux
 bindsym $mod+d exec ~/.local/bin/nexusctl dashboard --new-terminal
 
@@ -130,6 +151,9 @@ bindsym $mod+Control+l resize grow width 20px
 bindsym $mod+v splith
 bindsym $mod+s splitv
 bindsym $mod+w layout tabbed
+bindsym $mod+z layout stacking
+bindsym $mod+x layout toggle split
+bindsym $mod+c focus parent
 bindsym $mod+Shift+w layout toggle split
 
 # Scratchpad
@@ -141,15 +165,15 @@ floating_modifier $mod normal
 
 # ==================== Workspaces ====================
 
-bindsym $mod+1 workspace number 1
-bindsym $mod+2 exec ~/.local/bin/ws-launch 2
-bindsym $mod+3 exec ~/.local/bin/ws-launch 3
-bindsym $mod+4 workspace number 4
-bindsym $mod+5 workspace number 5
-bindsym $mod+6 workspace number 6
-bindsym $mod+7 workspace number 7
-bindsym $mod+8 workspace number 8
-bindsym $mod+9 workspace number 9
+bindsym $mod+1 exec ~/.local/bin/workspace open terminal
+bindsym $mod+2 exec ~/.local/bin/workspace open remote
+bindsym $mod+3 exec ~/.local/bin/workspace open ai
+bindsym $mod+4 exec ~/.local/bin/workspace open files
+bindsym $mod+5 exec ~/.local/bin/workspace open code
+bindsym $mod+6 exec ~/.local/bin/workspace open ops
+bindsym $mod+7 exec ~/.local/bin/workspace open web
+bindsym $mod+8 exec ~/.local/bin/workspace open notes
+bindsym $mod+9 exec ~/.local/bin/workspace open flex
 bindsym $mod+0 workspace number 10
 
 bindsym $mod+Shift+1 move container to workspace number 1
@@ -163,8 +187,15 @@ bindsym $mod+Shift+8 move container to workspace number 8
 bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
+bindsym $mod+bracketleft workspace prev_on_output
+bindsym $mod+bracketright workspace next_on_output
+bindsym $mod+Shift+less move workspace to output left
+bindsym $mod+Shift+greater move workspace to output right
+
 # $mod+Tab — window switcher (jump to any window by name, Alt-Tab style)
 bindsym $mod+Tab exec ~/.config/sway/scripts/window-switcher.sh
+# Workspace overview — choose a named workspace and see its window count.
+bindsym $mod+Shift+space exec ~/.local/bin/workspace overview
 bindsym $mod+Shift+Tab workspace prev_on_output
 
 bindsym --whole-window $mod+button4 workspace prev_on_output
@@ -216,33 +247,13 @@ bindsym $mod+Shift+n exec swaync-client -t -sw
 
 # ==================== Window Rules ====================
 
-# Auto-assign apps to workspaces and focus on open
-assign [app_id="kitty"] workspace number 1
-assign [app_id="kitty-plain"] workspace number 2
-assign [app_id="kitty-telisky-ai"] workspace number 3
-assign [app_id="google-chrome"] workspace number 7
-assign [class="Google-chrome"] workspace number 7
-assign [app_id="code"] workspace number 5
-assign [class="Code"] workspace number 5
-assign [class="code-fb"] workspace number 5
-assign [app_id="thunar"] workspace number 4
-assign [app_id="Zettlr"] workspace number 8
-assign [class="Google Chat"] workspace number 7
-assign [title="Google Chat"] workspace number 7
+# Workspace keys always switch to the requested destination. A profile app
+# launches if it is not already there; apps on other workspaces stay put.
+# Super+Tab searches globally, and Super+Shift+number moves a window deliberately.
 
-# Enforce the dedicated terminal workspaces after Kitty publishes its Wayland app ID.
-for_window [app_id="kitty-plain"] move container to workspace number 2
-for_window [app_id="kitty-telisky-ai"] move container to workspace number 3
-
-# Browser windows tile side-by-side, which uses an ultrawide efficiently.
+# Browser windows tile side-by-side when opened together.
 for_window [app_id="google-chrome"] layout splith
 for_window [class="Google-chrome"] layout splith
-
-# Auto-focus workspace when assigned app opens
-for_window [class="Code"] focus
-for_window [class="code-fb"] focus
-for_window [app_id="thunar"] focus
-for_window [class="Google Chat"] focus
 
 # Dropdown terminal — centered, quake-style
 for_window [app_id="dropdown"] {

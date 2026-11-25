@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Attach to the persistent devserver tmux session and expose the laptop's
+# browser-harness Chrome instance to agents running on the server.
+set -euo pipefail
+
+# GUI launchers inherit Sway/systemd's minimal PATH rather than zsh's login PATH.
+# All Telisky workstation helpers are installed under ~/.local/bin.
+export PATH="$HOME/.local/bin:${PATH:-/usr/local/bin:/usr/bin}"
+
+if ! command -v ts-devserver >/dev/null 2>&1; then
+    echo "devserver: ts-devserver is not installed" >&2
+    exit 127
+fi
+
+# The bridge needs the dedicated local Chrome CDP listener. Asking for tabs is
+# a cheap way to start browser-harness when it is not already running.
+if ! python3 - <<'PY'
+import socket
+with socket.socket() as sock:
+    sock.settimeout(0.3)
+    raise SystemExit(0 if sock.connect_ex(("127.0.0.1", 9222)) == 0 else 1)
+PY
+then
+    browser-harness --tabs >/dev/null
+fi
+
+exec ts-devserver --browser --session devserver

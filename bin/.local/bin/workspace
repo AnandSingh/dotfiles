@@ -1,0 +1,243 @@
+#!/usr/bin/env bash
+# Named Sway workspace manager.
+#
+# Usage:
+#   workspace open <name|number>
+#   workspace status
+#   workspace overview
+#   workspace reset <name|number> [--yes]
+
+set -euo pipefail
+
+readonly LOCK_DIR="${XDG_RUNTIME_DIR:-/run/user/$UID}"
+
+usage() {
+    cat <<'EOF'
+Usage: workspace COMMAND [WORKSPACE] [OPTIONS]
+
+Commands:
+  open NAME|NUMBER       Focus a workspace and start its profile if needed
+  status                 Show workspace names and window counts
+  overview               Choose a workspace with Rofi
+  reset NAME|NUMBER      Close all windows and reopen the profile
+
+Workspace names:
+  terminal remote ai files code ops web notes flex
+EOF
+}
+
+profile_number() {
+    case "${1,,}" in
+        terminal|term|1) echo 1 ;;
+        remote|dev|development|2) echo 2 ;;
+        ai|3) echo 3 ;;
+        files|file|4) echo 4 ;;
+        code|coding|5) echo 5 ;;
+        ops|operations|6) echo 6 ;;
+        web|browser|7) echo 7 ;;
+        notes|note|8) echo 8 ;;
+        flex|misc|9) echo 9 ;;
+        *) return 1 ;;
+    esac
+}
+
+profile_name() {
+    case "$1" in
+        1) echo terminal ;;
+        2) echo remote ;;
+        3) echo ai ;;
+        4) echo files ;;
+        5) echo code ;;
+        6) echo ops ;;
+        7) echo web ;;
+        8) echo notes ;;
+        9) echo flex ;;
+        *) echo "workspace-$1" ;;
+    esac
+}
+
+window_ids() {
+    local number="$1"
+    swaymsg -t get_tree --raw | jq -r --argjson number "$number" '
+        [ .. | objects
+          | select(.type? == "workspace" and .num? == $number)
+          | recurse(.nodes[]?, .floating_nodes[]?)
+          | select(.type? == "con" or .type? == "floating_con")
+          | .id ] | .[]'
+}
+
+window_count() {
+    local count
+    count=$(window_ids "$1" | sed '/^$/d' | wc -l)
+    echo "$count"
+}
+
+notify() {
+    command -v notify-send >/dev/null 2>&1 && notify-send -a workspace "$@" || true
+}
+
+focus_new_window() {
+    local number="$1" id="" attempt
+    # Sway assigns/moves windows asynchronously. Follow the new window instead
+    # of leaving focus on the launcher workspace or the previously active app.
+    for attempt in {1..120}; do
+        id=$(window_ids "$number" | tail -n1 || true)
+        if [[ -n "$id" ]]; then
+            swaymsg "[con_id=$id] focus" >/dev/null
+            return 0
+        fi
+        sleep 0.1
+    done
+    return 1
+}
+
+launch_profile() {
+    local number="$1"
+    local command=()
+
+    case "$number" in
+        2)
+            if command -v ghostty >/dev/null 2>&1; then
+                command=(ghostty --class=com.telisky.devserver --title="Devserver AKS" -e "$HOME/.local/bin/devserver")
+            else
+                command=(kitty --class=kitty-plain --title "Devserver AKS" -e "$HOME/.local/bin/devserver")
+            fi
+            ;;
+        3)
+            command=("$HOME/.local/bin/telisky-ai-codex-workspace")
+            ;;
+        4)
+            command=(thunar)
+            ;;
+        5)
+            command=(kitty --class=kitty-code -e tmux new-session -A -s code)
+            ;;
+        6)
+            command=("$HOME/.local/bin/nexusctl" dashboard --new-terminal)
+            ;;
+        7)
+            command=(google-chrome --new-window)
+            ;;
+        8)
+            command=("$HOME/.config/sway/scripts/notes-workspace.sh" --open-here)
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    if ! command -v "${command[0]}" >/dev/null 2>&1; then
+        notify -u critical "Workspace $(profile_name "$number")" "Missing launcher: ${command[0]}"
+        printf 'Missing launcher for workspace %s: %s\n' "$number" "${command[0]}" >&2
+        return 1
+    fi
+
+    # Prevent double launches when the workspace key is pressed repeatedly.
+    mkdir -p "$LOCK_DIR"
+    (
+        flock -n 9 || exit 0
+        setsid "${command[@]}" >/dev/null 2>&1 &
+        focus_new_window "$number" || true
+    ) 9>"$LOCK_DIR/workspace-$number.lock"
+}
+
+profile_window_exists() {
+    local number="$1" app="" app_alt="" class=""
+    case "$number" in
+        2) app="com.telisky.devserver"; app_alt="kitty-plain" ;;
+        3) app="kitty-telisky-ai" ;;
+        4) app="thunar" ;;
+        5) app="kitty-code" ;;
+        6) app="nexus-deck" ;;
+        7) app="google-chrome"; class="Google-chrome" ;;
+        8) app="Zettlr" ;;
+        *) return 1 ;;
+    esac
+
+    swaymsg -t get_tree --raw | jq -e --argjson number "$number" --arg app "$app" --arg app_alt "$app_alt" --arg class "$class" '
+        [ .. | objects
+          | select(.type? == "workspace" and .num? == $number)
+          | recurse(.nodes[]?, .floating_nodes[]?)
+          | select((.type? == "con" or .type? == "floating_con")
+            and (($app != "" and (.app_id? // "") == $app)
+              or ($app_alt != "" and (.app_id? // "") == $app_alt)
+              or ($class != "" and (.window_properties.class? // "") == $class))) ]
+        | length > 0' >/dev/null
+}
+
+open_workspace() {
+    local number="$1"
+
+    # Workspace shortcuts always land on the requested destination. Never
+    # steal a profile app from another workspace; Super+Tab finds those windows.
+    # If this workspace lacks its profile app, launch it even when other windows
+    # are already there.
+    swaymsg "workspace number $number" >/dev/null
+
+    if ! profile_window_exists "$number"; then
+        launch_profile "$number" || true
+    fi
+}
+
+status() {
+    printf '%-4s %-12s %s\n' 'NUM' 'NAME' 'WINDOWS'
+    printf '%-4s %-12s %s\n' '---' '----' '-------'
+    for number in {1..9}; do
+        printf '%-4s %-12s %s\n' "$number" "$(profile_name "$number")" "$(window_count "$number")"
+    done
+}
+
+overview() {
+    command -v rofi >/dev/null 2>&1 || { status; return 0; }
+
+    local choice
+    choice=$(for number in {1..9}; do
+        printf '%s\t%s (%s windows)\n' "$number" "$(profile_name "$number")" "$(window_count "$number")"
+    done | rofi -dmenu -i -p workspace -format s) || true
+
+    [[ -n "$choice" ]] || return 0
+    open_workspace "${choice%%$'\t'*}"
+}
+
+reset_workspace() {
+    local number="$1" confirmed="${2:-}"
+    if [[ "$confirmed" != "--yes" ]]; then
+        printf 'Close every window in workspace %s (%s)? [y/N] ' "$number" "$(profile_name "$number")" >&2
+        read -r answer
+        [[ "$answer" =~ ^[Yy]$ ]] || return 0
+    fi
+
+    while read -r id; do
+        [[ -n "$id" ]] && swaymsg "[con_id=$id] kill" >/dev/null || true
+    done < <(window_ids "$number")
+
+    # Sway removes containers asynchronously. Wait so open_workspace does not
+    # mistake a closing profile window for a healthy one and skip relaunching.
+    local attempt
+    for attempt in {1..50}; do
+        [[ -z "$(window_ids "$number")" ]] && break
+        sleep 0.1
+    done
+
+    open_workspace "$number"
+}
+
+main() {
+    local action="${1:-}" target="${2:-}"
+    case "$action" in
+        open)
+            [[ -n "$target" ]] || { usage >&2; exit 2; }
+            open_workspace "$(profile_number "$target")"
+            ;;
+        status) status ;;
+        overview) overview ;;
+        reset)
+            [[ -n "$target" ]] || { usage >&2; exit 2; }
+            reset_workspace "$(profile_number "$target")" "${3:-}"
+            ;;
+        help|--help|-h|"") usage ;;
+        *) printf 'Unknown command: %s\n\n' "$action" >&2; usage >&2; exit 2 ;;
+    esac
+}
+
+main "$@"

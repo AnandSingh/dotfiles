@@ -68,6 +68,49 @@ tooltip label {
     font-weight: bold;
 }
 
+/* Wispr Flow-style dictation activity: hidden when idle, animated while active. */
+#custom-voice {
+    border-radius: 10px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+#custom-voice.idle {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+}
+
+#custom-voice.starting,
+#custom-voice.recording,
+#custom-voice.processing,
+#custom-voice.error {
+    min-width: 70px;
+    margin: 4px 0 4px 8px;
+    padding: 0 9px;
+}
+
+#custom-voice.starting {
+    color: #f9e2af;
+    background: rgba(249, 226, 175, 0.14);
+}
+
+#custom-voice.recording {
+    color: #f38ba8;
+    background: rgba(243, 139, 168, 0.16);
+}
+
+#custom-voice.processing {
+    color: #cba6f7;
+    background: rgba(203, 166, 247, 0.16);
+}
+
+#custom-voice.error {
+    color: #1e1e2e;
+    background: #f38ba8;
+}
+
 #clock {
     color: #cdd6f4;
     font-weight: bold;

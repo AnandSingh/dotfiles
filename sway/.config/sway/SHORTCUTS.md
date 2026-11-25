@@ -8,15 +8,17 @@ machine's `config.d/local.conf`. Open the generated binding helper with `Super+F
 | Keys | Action |
 |---|---|
 | `Super+Return` / `Super+T` | Focus a Kitty window or launch Kitty |
+| `Super+Shift+Return` | Open/focus Ghostty connected to remote tmux `devserver` |
+| Hold `F10` | Record dictation; release to transcribe remotely and paste |
 | `Super+Space` | Rofi app/window/command launcher |
-| `Super+B` | Chrome on workspace 7 |
-| `Super+E` | Thunar on workspace 4 |
+| `Super+B` | Open a new Chrome window on the current workspace |
+| `Super+E` | Open Thunar on the current workspace |
 | `Super+D` | Nexus Deck in a dedicated terminal |
 | ``Super+` `` | Toggle dropdown terminal |
 | `Super+N` | Open/focus Zettlr Notes on workspace 8; press again to return |
 | `Super+Y` | Yazi in Kitty |
-| `Super+2` | Open/focus devserver-aks tmux workspace lazily |
-| `Super+3` | Open/focus telisky-ai Codex workspace lazily |
+| `Super+2` | Switch to remote workspace; open its terminal if missing there |
+| `Super+3` | Switch to AI workspace; open its terminal if missing there |
 
 ## Windows and layouts
 
@@ -32,21 +34,28 @@ machine's `config.d/local.conf`. Open the generated binding helper with `Super+F
 | `Super+Shift+S` | Toggle sticky |
 | `Super+V` / `Super+S` | Horizontal/vertical split |
 | `Super+W` | Tabbed layout |
-| `Super+Shift+W` | Toggle split orientation |
+| `Super+Z` | Stacking layout |
+| `Super+X` / `Super+Shift+W` | Toggle split orientation |
+| `Super+C` | Focus parent container |
 | `Super+-` | Move window to scratchpad |
 | `Super+=` | Show/cycle scratchpad |
 | `Super+Tab` | Search and jump to any window |
+| `Super+Shift+Space` | Workspace overview and launcher |
 | `Super+Shift+Tab` | Previous workspace on this output |
 
 ## Workspaces
 
 | Keys | Action |
 |---|---|
-| `Super+1…9` | Switch workspace (`2` and `3` lazy-launch their workflows) |
+| `Super+1…9` | Switch there; launch its profile if it is not already there. Other workspaces stay put |
+| `workspace status` | Show workspace window counts from a terminal |
+| `workspace reset NAME --yes` | Close and relaunch a workspace profile |
 | `Super+Shift+1…9` | Move focused window to workspace |
+| `Super+[` / `Super+]` | Previous/next workspace on this output |
+| `Super+Shift+<` / `Super+Shift+>` | Move current workspace to left/right monitor |
 | `Super+mouse wheel` | Previous/next workspace |
 
-Layout: `1:local tmux  2:devserver  3:Codex  4:files  5:dev GUI  6:monitoring  7:browser  8:notes  9:flex`.
+Layout: `1:term  2:remote  3:ai  4:files  5:code  6:ops  7:web  8:notes  9:flex`.
 Workspace 10 is disabled on this laptop.
 
 ## Clipboard and screenshots

@@ -1,0 +1,13 @@
+[Unit]
+Description=Vocalinux push-to-talk dictation client
+After=graphical-session.target pipewire.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/vocalinux-daemon
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

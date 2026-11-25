@@ -23,16 +23,15 @@ This dotfiles repository uses [GNU Stow](https://www.gnu.org/software/stow/) for
 - **Neovim**: Modern Vim with plugins
 
 ### Terminal
-- **Kitty**: GPU-accelerated terminal (auto-attaches to tmux)
+- **Ghostty**: preferred laptop terminal for the browser-enabled `devserver-aks` remote workspace
+- **Kitty**: fallback terminal and local tmux auto-attach client
 
-### Linux Window Managers (Linux only)
-- **Sway**: Wayland tiling compositor (primary) — quake dropdown terminal, tabbed Chrome profiles, auto-focus workspaces
-- **i3**: Tiling window manager (X11 fallback)
-- **Hyprland**: Wayland compositor
-- **Waybar**: Status bar for Wayland
-- **Polybar**: Status bar for X11
-- **Picom**: Compositor for X11
-- Additional: xprofile, xresources, volumeicon, screenz
+### Linux Desktop (primary)
+- **Sway**: primary Wayland compositor, with Waybar and named workspaces
+- **Waybar**: status bar (right-click volume to pick an output; middle-click opens pavucontrol)
+- **Vocalinux**: hold-F10 dictation through private GPU Whisper on `devserver-aks`
+- Alternate i3/Hyprland and X11 Polybar/Picom configs are archived under `legacy/` and are not installed by default.
+- Additional compatibility configs: xprofile, xresources, volumeicon, screenz
 
 ### Dev Tools (installed via bootstrap)
 - **eza**: Modern `ls` with icons and git status
@@ -90,7 +89,7 @@ See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed post-install steps and key bin
 ./install.sh              # install all
 ./install.sh core         # just git, zsh, tmux
 ./install.sh editors      # just vim, nvim
-./install.sh linux-wm     # sway, kitty, waybar, etc.
+./install.sh linux-wm     # sway, Kitty fallback, Waybar, etc.
 ./install.sh restow       # re-symlink after changes
 ./install.sh uninstall    # remove all symlinks
 stow zsh                  # stow a single package
@@ -107,16 +106,14 @@ dotfiles/
 ├── git/                  # Git configuration
 ├── zsh/                  # Zsh + aliases + dev shortcuts
 ├── tmux/                 # Tmux with resurrect + continuum
-├── kitty/                # Kitty terminal (auto-attach tmux)
+├── ghostty/              # Preferred remote-development terminal
+├── kitty/                # Kitty fallback/local terminal (auto-attach tmux)
 ├── vim/                  # Vim configuration
 ├── nvim/                 # Neovim configuration
 ├── sway/                 # Sway compositor + dropdown terminal
 │   └── scripts/          # Sway helper scripts
-├── waybar/               # Waybar status bar
-├── i3/                   # i3 window manager
-├── hyprland/             # Hyprland compositor
-├── polybar/              # Polybar status bar
-├── picom/                # Picom compositor
+├── waybar/               # Active Waybar config and custom modules
+├── legacy/               # Archived alternate WMs and Waybar backups
 └── ...
 ```
 

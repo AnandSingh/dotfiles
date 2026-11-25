@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Run the signed Vocalinux RPM with user-owned push-to-talk, Speaches, and
+# Waybar compatibility fixes until equivalent behavior lands upstream.
+set -euo pipefail
+
+export PYTHONNOUSERSITE=1
+export PYTHONPATH="$HOME/.local/lib/vocalinux-patched:/usr/lib/vocalinux/vendor"
+if [[ -d /usr/lib/vocalinux/vendor/pywhispercpp.libs ]]; then
+    export LD_LIBRARY_PATH="/usr/lib/vocalinux/vendor/pywhispercpp.libs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
+
+printf 'idle\n' > "${XDG_RUNTIME_DIR:-/run/user/$UID}/vocalinux-waybar-state"
+exec /usr/bin/python3 -m vocalinux.main --wayland --start-minimized

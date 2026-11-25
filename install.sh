@@ -43,6 +43,7 @@ CORE_PACKAGES=(
     "zsh"
     "tmux"
     "kitty"
+    "ghostty"
     "bin"
 )
 
@@ -58,14 +59,16 @@ GNOME_PACKAGES=(
 LINUX_WM_PACKAGES=(
     "sway"
     "swaync"
+    "swaylock"
     "kitty"
     "gtk"
     "pipewire"
     "waybar"
-    "i3"
-    "hyprland"
-    "polybar"
-    "picom"
+    "eww"
+    "fuzzel"
+    "swappy"
+    "vocalinux"
+    "zettlr"
     "xprofile"
     "xresources"
     "volumeicon"
@@ -141,12 +144,12 @@ install_editors() {
     done
 }
 
-# Warn before installing Hyprland/desktop configs if expected tools are missing.
+# Warn before stowing the active Sway desktop configs if required tools are missing.
 check_linux_wm_tools() {
     local missing=()
     local tool
 
-    for tool in Hyprland waybar rofi wl-paste; do
+    for tool in sway waybar rofi wl-paste; do
         if ! command -v "$tool" &> /dev/null; then
             missing+=("$tool")
         fi
@@ -154,7 +157,7 @@ check_linux_wm_tools() {
 
     if [ ${#missing[@]} -gt 0 ]; then
         log_warn "Missing Linux WM tools: ${missing[*]}"
-        log_warn "Stowing configs is OK, but Hyprland won't be launch-ready until these are installed."
+        log_warn "Stowing configs is OK, but Sway won't be fully usable until these are installed."
     fi
 }
 
@@ -211,7 +214,7 @@ Usage: $0 [OPTION]
 Options:
     install             Install core/editor packages (default, safe)
     all                 Install all packages including Linux WM/desktop configs
-    core                Install only core packages (git, zsh, tmux, kitty)
+    core                Install only core packages (git, zsh, tmux, Ghostty, Kitty)
     editors             Install only editor packages (vim, nvim)
     gnome               Install only GNOME desktop customizations
     linux-wm            Install only Linux window manager packages

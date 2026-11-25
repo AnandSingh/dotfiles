@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Open the persistent Telisky tmux server on devserver-aks from a laptop.
+set -euo pipefail
+
+REMOTE="${TS_DEVSERVER_HOST:-devserver-aks}"
+REMOTE_USER="${TS_DEVSERVER_USER:-}"
+REMOTE_IDENTITY="${TS_DEVSERVER_IDENTITY:-}"
+CONNECT_TIMEOUT="${TS_DEVSERVER_CONNECT_TIMEOUT:-20}"
+SESSION="${TS_DEVSERVER_SESSION:-telisky}"
+REMOTE_TERM="${TS_DEVSERVER_TERM:-xterm-256color}"
+LOCAL_CDP_PORT="${TS_BROWSER_LOCAL_PORT:-9222}"
+REMOTE_CDP_PORT="${TS_BROWSER_REMOTE_PORT:-49222}"
+BROWSER=0
+CHECK=0
+
+usage() {
+  cat <<'EOF'
+Usage: ts-devserver [--browser] [--session NAME] [--check]
+
+Attach this terminal to the persistent tmux session on devserver-aks.
+Use --browser to forward the laptop's loopback Chrome CDP port to loopback
+on devserver-aks for browser-harness use. The local CDP listener must already
+be running (start it with `browser-harness --tabs`).
+
+Options:
+  --session NAME  tmux session to attach (default: telisky)
+  --browser       forward local browser CDP over this SSH connection
+  --check         check SSH and that the target tmux session exists; do not attach
+  -h, --help      show this help
+
+Environment:
+  TS_DEVSERVER_HOST          SSH host alias/address (default: devserver-aks)
+  TS_DEVSERVER_USER          optional SSH user override
+  TS_DEVSERVER_IDENTITY      optional SSH identity-file override
+  TS_DEVSERVER_CONNECT_TIMEOUT SSH connect timeout in seconds (default: 20)
+  TS_DEVSERVER_SESSION       default tmux session (default: telisky)
+  TS_DEVSERVER_TERM          TERM for the remote tmux client (default: xterm-256color)
+  TS_BROWSER_LOCAL_PORT      laptop CDP port (default: 9222)
+  TS_BROWSER_REMOTE_PORT     loopback port on devserver (default: 49222; keep in sync with TELISKY_BROWSER_CDP_PORT remotely)
+EOF
+}
+
+valid_name() { [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; }
+valid_port() { [[ "$1" =~ ^[0-9]{1,5}$ ]] && (( 10#$1 >= 1 && 10#$1 <= 65535 )); }
+
+while (($#)); do
+  case "$1" in
+    --browser) BROWSER=1; shift ;;
+    --check) CHECK=1; shift ;;
+    --session)
+      (($# >= 2)) || { echo "ts-devserver: --session requires a name" >&2; exit 64; }
+      SESSION="$2"; shift 2 ;;
+    --session=*) SESSION="${1#*=}"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "ts-devserver: unknown argument: $1" >&2; usage >&2; exit 64 ;;
+  esac
+done
+
+valid_name "$REMOTE" || { echo "ts-devserver: invalid SSH host alias: $REMOTE" >&2; exit 64; }
+if [[ -n "$REMOTE_USER" ]]; then
+  valid_name "$REMOTE_USER" || { echo "ts-devserver: invalid SSH user: $REMOTE_USER" >&2; exit 64; }
+fi
+[[ "$CONNECT_TIMEOUT" =~ ^[0-9]+$ ]] && (( CONNECT_TIMEOUT > 0 && CONNECT_TIMEOUT <= 120 )) || { echo "ts-devserver: invalid SSH connect timeout: $CONNECT_TIMEOUT" >&2; exit 64; }
+valid_name "$SESSION" || { echo "ts-devserver: invalid tmux session name: $SESSION" >&2; exit 64; }
+valid_name "$REMOTE_TERM" || { echo "ts-devserver: invalid terminal type: $REMOTE_TERM" >&2; exit 64; }
+valid_port "$LOCAL_CDP_PORT" || { echo "ts-devserver: invalid local CDP port: $LOCAL_CDP_PORT" >&2; exit 64; }
+valid_port "$REMOTE_CDP_PORT" || { echo "ts-devserver: invalid remote CDP port: $REMOTE_CDP_PORT" >&2; exit 64; }
+(( !(BROWSER && CHECK) )) || { echo "ts-devserver: --browser and --check cannot be combined" >&2; exit 64; }
+
+# Force a UTF-8 locale for the tmux client. This host's SSH config deliberately
+# does not SendEnv LANG, and tmux otherwise sanitizes Powerline/Nerd glyphs.
+remote_command="LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 TERM='$REMOTE_TERM' tmux has-session -t '$SESSION'"
+if (( ! CHECK )); then
+  remote_command="LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8 TERM='$REMOTE_TERM' tmux new-session -A -s '$SESSION'"
+fi
+
+ssh_args=(-o "ConnectTimeout=$CONNECT_TIMEOUT" -o ServerAliveInterval=30 -o ServerAliveCountMax=3)
+if [[ -n "$REMOTE_USER" ]]; then ssh_args+=(-l "$REMOTE_USER"); fi
+if [[ -n "$REMOTE_IDENTITY" ]]; then
+  [[ -r "$REMOTE_IDENTITY" ]] || { echo "ts-devserver: identity file not readable: $REMOTE_IDENTITY" >&2; exit 66; }
+  ssh_args+=(-i "$REMOTE_IDENTITY" -o IdentitiesOnly=yes)
+fi
+if (( CHECK )); then
+  echo "Checking $REMOTE tmux session '$SESSION'..."
+elif (( BROWSER )); then
+  python3 - "$LOCAL_CDP_PORT" <<'PY' || {
+import socket
+import sys
+port = int(sys.argv[1])
+with socket.socket() as sock:
+    sock.settimeout(0.5)
+    raise SystemExit(0 if sock.connect_ex(("127.0.0.1", port)) == 0 else 1)
+PY
+    echo "ts-devserver: no local Chrome CDP listener on 127.0.0.1:$LOCAL_CDP_PORT" >&2
+    echo "Start the dedicated browser harness first: browser-harness --tabs" >&2
+    exit 69
+  }
+  ssh_args+=(-o ExitOnForwardFailure=yes -R "127.0.0.1:${REMOTE_CDP_PORT}:127.0.0.1:${LOCAL_CDP_PORT}")
+  echo "Forwarding laptop browser 127.0.0.1:$LOCAL_CDP_PORT to $REMOTE loopback port $REMOTE_CDP_PORT."
+else
+  echo "Connecting to $REMOTE tmux session '$SESSION'. Detach with tmux prefix C-a, then d."
+fi
+
+if (( ! CHECK )); then ssh_args+=(-t); fi
+exec ssh "${ssh_args[@]}" "$REMOTE" "$remote_command"

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Repeat-safe external push-to-talk control plus immediate Waybar state updates.
+set -euo pipefail
+
+state_file="${XDG_RUNTIME_DIR:-/run/user/$UID}/vocalinux-waybar-state"
+action=${1:-}
+state=$(cat "$state_file" 2>/dev/null || printf 'idle')
+
+case "$action" in
+    start)
+        case "$state" in
+            idle|error)
+                printf 'starting\n' > "$state_file"
+                if ! vocalinux --start; then
+                    printf 'error\n' > "$state_file"
+                    exit 1
+                fi
+                ;;
+        esac
+        ;;
+    stop)
+        case "$state" in
+            starting|listening)
+                printf 'processing\n' > "$state_file"
+                if ! vocalinux --stop; then
+                    printf 'error\n' > "$state_file"
+                    exit 1
+                fi
+                ;;
+        esac
+        ;;
+    *)
+        echo "Usage: vocalinux-ptt {start|stop}" >&2
+        exit 2
+        ;;
+esac

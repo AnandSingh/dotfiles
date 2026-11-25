@@ -177,6 +177,16 @@ alias free='free -h'
 alias ports='ss -tulnp'
 alias top='btop'
 
+# Persistent remote shells: tmux runs on the server, so sessions survive local
+# disconnects, sleep, and lid-close suspend. Keep old command names as wrappers.
+devserver() { "$HOME/.local/bin/devserver"; }
+devserver-aks() { devserver; }
+et-dev() { devserver; }
+devserver-magma() { ssh -t devserver-aks-magma 'tmux new -As main'; }
+telisky() { et telisky-ai -c 'tmux new -As main'; }
+telisky-ai() { telisky; }
+et-ai() { telisky; }
+
 # ==================== Tool Integrations ====================
 
 # zoxide — smarter cd (type 'z dotfiles' from anywhere)
@@ -191,20 +201,8 @@ export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/anandsingh/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/anandsingh/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/anandsingh/anaconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/home/anandsingh/anaconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
+# Machine-specific toolchains belong in ~/.zshrc.local; avoid initializing a
+# Conda install from another machine's absolute home path here.
 
 # Machine-specific config (CUDA, local paths, etc.)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
@@ -218,3 +216,11 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # npm global (user-local) — added for codex CLI
 export PATH="$HOME/.npm-global/bin:$PATH"
+
+# Telisky developer defaults
+export TELISKY_WORKTREE_ROOT="$HOME/ts-worktrees"
+
+# Homebrew on Linux (optional; keep startup portable across users/machines).
+if [[ -x "$HOME/.linuxbrew/bin/brew" ]]; then
+  eval "$("$HOME/.linuxbrew/bin/brew" shellenv)"
+fi

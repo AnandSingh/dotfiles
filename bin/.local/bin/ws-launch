@@ -1,22 +1,5 @@
 #!/usr/bin/env bash
-# Focus a workspace and lazily start its assigned app when it has no windows.
+# Backwards-compatible wrapper for the named workspace manager.
 set -euo pipefail
 
-ws=${1:?usage: ws-launch WORKSPACE}
-case "$ws" in
-    2) cmd=("$HOME/.local/bin/remote-tmux-kitty" devserver-aks kitty-plain "Devserver AKS") ;;
-    3) cmd=("$HOME/.local/bin/telisky-ai-codex-workspace") ;;
-    *) exec swaymsg "workspace number $ws" ;;
-esac
-
-swaymsg "workspace number $ws" >/dev/null
-windows=$(swaymsg -t get_tree --raw | jq --argjson ws "$ws" '
-    [.. | objects
-      | select(.type? == "workspace" and .num? == $ws)
-      | (((.nodes // []) | length) + ((.floating_nodes // []) | length))]
-    | add // 0
-')
-
-if (( windows == 0 )); then
-    setsid "${cmd[@]}" >/dev/null 2>&1 &
-fi
+exec "$HOME/.local/bin/workspace" open "${1:?usage: ws-launch WORKSPACE}"

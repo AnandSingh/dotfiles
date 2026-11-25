@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+# Build a user-owned compatibility overlay for Vocalinux 0.18.6.
+set -euo pipefail
+
+source_dir=/usr/lib/vocalinux/app/vocalinux
+overlay="$HOME/.local/lib/vocalinux-patched"
+version=4
+marker="$overlay/.telisky-overlay-version"
+
+if [[ -f "$marker" ]] && [[ $(<"$marker") == "$version" ]]; then
+    exit 0
+fi
+if [[ ! -d "$source_dir" ]]; then
+    echo "vocalinux-install-overlay: Vocalinux RPM is not installed" >&2
+    exit 1
+fi
+
+rm -rf "$overlay"
+mkdir -p "$overlay"
+cp -a "$source_dir" "$overlay/vocalinux"
+
+python3 - "$overlay" <<'PY'
+from pathlib import Path
+import sys
+
+overlay = Path(sys.argv[1])
+recognition = overlay / "vocalinux/speech_recognition/recognition_manager.py"
+tray = overlay / "vocalinux/ui/tray_indicator.py"
+
+source = recognition.read_text()
+old = '''        data = {"model": self.remote_api_model or "whisper-1"}
+        if lang:
+            data["language"] = lang
+
+        try:
+'''
+new = '''        data = {"model": self.remote_api_model or "whisper-1"}
+        if lang:
+            data["language"] = lang
+
+        # Speaches supports faster-whisper hotwords and server-side VAD. Hotwords
+        # preserve technical spelling without treating the vocabulary as prior
+        # transcript text, which can cause prompt repetition on short recordings.
+        if self.dictionary_manager is not None:
+            try:
+                hotwords = self.dictionary_manager.build_initial_prompt()
+                if hotwords:
+                    data["hotwords"] = hotwords
+            except (OSError, TypeError, ValueError) as error:
+                logger.warning("Could not build remote custom dictionary hotwords: %s", error)
+        data["vad_filter"] = "true"
+
+        try:
+'''
+if old not in source:
+    raise SystemExit("Vocalinux remote API block did not match")
+source = source.replace(old, new, 1)
+
+old = '''    trailing_newline = text.endswith(("\\n", "\\r"))
+    return probe + "\\n" if trailing_newline else probe
+
+
+def _show_notification'''
+new = '''    trailing_newline = text.endswith(("\\n", "\\r"))
+    return probe + "\\n" if trailing_newline else probe
+
+
+def _collapse_pathological_repetition(text: str) -> str:
+    """Collapse an entire word or phrase repeated at least three times."""
+    if not text:
+        return text
+    trailing_newline = text.endswith(("\\n", "\\r"))
+    words = text.strip().split()
+    for phrase_length in range(1, min(16, len(words) // 3) + 1):
+        if len(words) % phrase_length:
+            continue
+        phrase = words[:phrase_length]
+        repeats = len(words) // phrase_length
+        if repeats < 3:
+            continue
+        if all(
+            [word.casefold() for word in words[offset : offset + phrase_length]]
+            == [word.casefold() for word in phrase]
+            for offset in range(phrase_length, len(words), phrase_length)
+        ):
+            collapsed = " ".join(phrase)
+            logger.warning(
+                "Collapsed pathological remote transcription repetition (%dx): %r",
+                repeats,
+                collapsed,
+            )
+            return collapsed + "\\n" if trailing_newline else collapsed
+    return text
+
+
+def _show_notification'''
+if old not in source:
+    raise SystemExit("Vocalinux non-speech filter block did not match")
+source = source.replace(old, new, 1)
+
+old = '''            text = _filter_non_speech(text) if text else ""
+
+            if text:
+'''
+new = '''            text = _filter_non_speech(text) if text else ""
+            text = _collapse_pathological_repetition(text)
+
+            if text:
+'''
+if old not in source:
+    raise SystemExit("Vocalinux remote result filter block did not match")
+source = source.replace(old, new, 1)
+
+old = '''        self._audio_stream = None
+        self._pyaudio_instance = None
+        self._capture_sample_rate = 16000  # Default, updated when device is opened
+'''
+new = '''        self._audio_stream = None
+        self._pyaudio_instance = None
+        # Initialize PortAudio once during daemon startup. This enumerates devices
+        # before the first hotkey press but opens no microphone stream.
+        if not is_pipewire_device(self.audio_device_index, self.audio_device_name):
+            try:
+                import pyaudio
+
+                self._pyaudio_instance = pyaudio.PyAudio()
+                logger.info("PortAudio context pre-initialized for low-latency dictation")
+            except (ImportError, OSError, AttributeError) as error:
+                logger.warning("Could not pre-initialize PortAudio: %s", error)
+        self._capture_sample_rate = 16000  # Default, updated when device is opened
+'''
+if old not in source:
+    raise SystemExit("Vocalinux audio-context initialization block did not match")
+source = source.replace(old, new, 1)
+
+old = '''                self._pyaudio_instance = pyaudio.PyAudio()
+                audio = self._pyaudio_instance
+                source.audio = audio
+'''
+new = '''                # Retain the PortAudio context between dictations so every key
+                # press does not spend ~2 seconds enumerating devices. The actual
+                # microphone stream is still opened only while F10 is held.
+                if self._pyaudio_instance is None:
+                    self._pyaudio_instance = pyaudio.PyAudio()
+                audio = self._pyaudio_instance
+                source.audio = audio
+'''
+if old not in source:
+    raise SystemExit("Vocalinux PyAudio initialization block did not match")
+source = source.replace(old, new, 1)
+
+old = '''            try:
+                # Reconnection may have rebuilt the source even on failure.
+                source = self._capture_source or source
+                if source is not None:
+                    source.close()
+            except (OSError, RuntimeError) as e:
+                failure = failure or e
+                logger.error("Failed to close audio capture: %s", e)
+            finally:
+                # close() owns the PyAudio instance as well as the stream.
+                # Only clear manager fields still bound to this source.
+                if self._capture_source is source:
+                    self._audio_stream = None
+                    self._pyaudio_instance = None
+                    self._capture_downmix_channel = None
+                    self._reconnection_attempts = 0
+                    self._last_audio_error_time = 0.0
+                    self._capture_source = None
+'''
+new = '''            keep_pyaudio = False
+            try:
+                # Reconnection may have rebuilt the source even on failure.
+                source = self._capture_source or source
+                keep_pyaudio = bool(
+                    failure is None
+                    and source is not None
+                    and getattr(source, "requires_pyaudio", True)
+                    and audio is not None
+                )
+                if source is not None:
+                    if keep_pyaudio:
+                        # close() normally owns and terminates PyAudio. Detach the
+                        # context so it closes only the microphone stream.
+                        source.audio = None
+                    source.close()
+            except (OSError, RuntimeError) as e:
+                failure = failure or e
+                logger.error("Failed to close audio capture: %s", e)
+            finally:
+                # The stream and source are always per-session. A healthy
+                # PortAudio context remains process-local for the next press.
+                if self._capture_source is source:
+                    self._audio_stream = None
+                    if not keep_pyaudio:
+                        self._pyaudio_instance = None
+                    self._capture_downmix_channel = None
+                    self._reconnection_attempts = 0
+                    self._last_audio_error_time = 0.0
+                    self._capture_source = None
+'''
+if old not in source:
+    raise SystemExit("Vocalinux audio cleanup block did not match")
+source = source.replace(old, new, 1)
+
+old = '''            logger.info("Audio recording started")
+
+            # Record audio while should_record is True
+'''
+new = '''            logger.info("Audio recording started")
+            runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+            if runtime_dir:
+                try:
+                    Path(runtime_dir, "vocalinux-waybar-state").write_text("listening\\n")
+                except OSError:
+                    logger.debug("Could not update Waybar recording state", exc_info=True)
+
+            # Record audio while should_record is True
+'''
+if old not in source:
+    raise SystemExit("Vocalinux recording-start block did not match")
+source = source.replace(old, new, 1)
+
+recognition.write_text(source)
+
+source = tray.read_text()
+old = '''    def _external_start(self) -> None:
+        """Start recognition for an external (D-Bus) trigger.
+
+        Uses normal start semantics — not push-to-talk — so a single
+        `vocalinux --start` transcribes immediately/with silence detection
+        rather than deferring until a Stop.
+        """
+        with self._ptt_lock:
+            self._ptt_owner = None
+            if self.speech_engine.state == RecognitionState.IDLE:
+                self.speech_engine.start_recognition()
+'''
+new = '''    def _external_start(self) -> None:
+        """Start push-to-talk recognition for an external D-Bus trigger."""
+        with self._ptt_lock:
+            self._ptt_owner = None
+            if self.speech_engine.state == RecognitionState.IDLE:
+                self.speech_engine.start_recognition(mode="push_to_talk")
+'''
+if old not in source:
+    raise SystemExit("Vocalinux external-start block did not match")
+source = source.replace(old, new, 1)
+
+old = '''        if isinstance(engine_state, RecognitionState):
+            state = engine_state
+
+        if state == RecognitionState.IDLE and getattr(
+'''
+new = '''        if isinstance(engine_state, RecognitionState):
+            state = engine_state
+
+        # Feed the bottom-bar indicator. LISTENING begins as "starting" and the
+        # capture thread changes it to "listening" only after the microphone is open.
+        runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+        if runtime_dir:
+            waybar_state = {
+                RecognitionState.IDLE: "idle",
+                RecognitionState.LISTENING: "starting",
+                RecognitionState.PROCESSING: "processing",
+                RecognitionState.ERROR: "error",
+            }.get(state, "idle")
+            try:
+                state_path = os.path.join(runtime_dir, "vocalinux-waybar-state")
+                temporary_path = state_path + ".tmp"
+                with open(temporary_path, "w", encoding="utf-8") as state_file:
+                    state_file.write(waybar_state + "\\n")
+                os.replace(temporary_path, state_path)
+            except OSError:
+                logger.debug("Could not update Waybar dictation state", exc_info=True)
+
+        if state == RecognitionState.IDLE and getattr(
+'''
+if old not in source:
+    raise SystemExit("Vocalinux UI-state block did not match")
+tray.write_text(source.replace(old, new, 1))
+PY
+
+python3 -m py_compile \
+    "$overlay/vocalinux/speech_recognition/recognition_manager.py" \
+    "$overlay/vocalinux/ui/tray_indicator.py"
+printf '%s\n' "$version" > "$marker"
+echo "Installed Vocalinux compatibility overlay v$version"
