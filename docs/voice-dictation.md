@@ -71,7 +71,10 @@ hotwords rather than a prior-transcript prompt, reducing repetition on short aud
 
 The disabled laptop-local `voice-dev`, OpenAI-backed `pi-voice`, scp-per-request
 `voice-devserver`, standalone Whisper wrappers/models, and unused Sway bindings
-were removed. No competing voice daemon or local speech model remains.
+were removed. The obsolete `@juicesharp/rpiv-voice` package and its F9/Alt-key
+shortcuts, footer status, and text-correction extensions were also removed from
+Pi on both the laptop and `devserver-aks`. Global F10 through Vocalinux is the
+sole dictation path; no competing voice daemon or local speech model remains.
 
 The old `freeflow-stt` container on `telisky-ai` is decommissioned but its
 service definition may be retained as a reference for a possible later move.
